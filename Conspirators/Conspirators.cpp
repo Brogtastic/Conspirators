@@ -1,4 +1,5 @@
 #include "raylib.h"
+#include "MiddleMan.h"
 #include <iostream>
 #include <string>
 #include <list>
@@ -10,28 +11,43 @@ using namespace std;
 // Program main entry point
 //------------------------------------------------------------------------------------
 
+// Your custom C++ function to process the request
+// Modify this function to perform the desired functionality
+
 string GenerateRandomString() {
-	const string allowedCharacters = "123456789ABCDEFGHIJKLMNPQRSTUVWXYZ";
+	const string allowedCharacters = "123456789ABCDEFGHIJKLMNPQRSTUVWXYZ"; // Removed the O and the 0 cause too similar looking
 	string randomString;
 	for (int i = 0; i < 4; i++) {
-		int random = rand() % 32;
-		randomString += allowedCharacters[random];
+		int randomChar = rand() % 32;
+		randomString += allowedCharacters[randomChar];
 	}
-	print("\n\n\n" + randomString + "\n\n\n");
+	print("\n" + randomString + "\n");
 	return randomString;
+}
+
+void ToggleFullScreenWindow(int windowWidth, int windowHeight) {
+	if (!IsWindowFullscreen) {
+		//SetWindowSize(1280, 720);
+		int monitor = GetCurrentMonitor();
+		SetWindowSize(GetMonitorWidth(monitor), GetMonitorHeight(monitor));
+		ToggleFullscreen();
+	}
+	else {
+		ToggleFullscreen();
+		SetWindowSize(windowWidth, windowHeight);
+	}
 }
 
 int main(void)
 {
+
 	// Initialization
 	//--------------------------------------------------------------------------------------
 	const int initialScreenWidth = 1280;
 	const int initialScreenHeight = 720;
 
-	int screenWidth = 1280;
-	int screenHeight = 720;
-	int realScreenWidth = 1280;
-	int realScreenHeight = 720;
+	int screenWidth = 1280, realScreenWidth = 1280, rememberScreenWidth = 1280;
+	int screenHeight = 720, realScreenHeight = 720, rememberScreenHeight = 720;
 	int xScreenMargin, yScreenMargin = 0;
 
 	SetConfigFlags(FLAG_WINDOW_RESIZABLE);
@@ -40,6 +56,7 @@ int main(void)
 	string generateCode = GenerateRandomString();
 	const char* roomCode = generateCode.c_str();
 
+	print("\n\nYour name must be " + MainToServer("server") + "\n\n");
 	
 	SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
 	//--------------------------------------------------------------------------------------
@@ -55,7 +72,7 @@ int main(void)
 		realScreenHeight = GetScreenHeight();
 		realScreenWidth = GetScreenWidth();
 
-		
+		// Makes sure background is always in a 16:9 ratio
 		if (screenWidth > (screenHeight * 16) / 9) {
 			screenWidth = (screenHeight * 16) / 9;
 		}
@@ -63,7 +80,7 @@ int main(void)
 			screenHeight = (screenWidth * 9) / 16;
 		}
 
-		
+		// Finding measurements to keep the game centered in the window
 		if (realScreenHeight > screenHeight) {
 			yScreenMargin = (realScreenHeight - screenHeight) / 2;
 		}
@@ -76,6 +93,7 @@ int main(void)
 		else {
 			xScreenMargin = 0;
 		}
+
 
 		//----------------------------------------------------------------------------------
 
@@ -119,6 +137,23 @@ int main(void)
 		if (IsKeyPressed(KEY_N)) {
 			generateCode = GenerateRandomString();
 			roomCode = generateCode.c_str();
+		}
+
+		if (IsKeyPressed(KEY_F)) {
+			if (!IsWindowFullscreen()) {
+				rememberScreenWidth = GetScreenWidth();
+				rememberScreenHeight = GetScreenHeight();
+				int monitor = GetCurrentMonitor();
+				screenWidth = GetMonitorWidth(monitor);
+				screenHeight = GetMonitorHeight(monitor);
+				SetWindowSize(GetMonitorWidth(monitor), GetMonitorHeight(monitor));
+				SetWindowSize(1600, 900);
+				ToggleFullscreen();
+			}
+			else {
+				ToggleFullscreen();
+				SetWindowSize(rememberScreenWidth, rememberScreenHeight);
+			}
 		}
 		
 		EndDrawing();
