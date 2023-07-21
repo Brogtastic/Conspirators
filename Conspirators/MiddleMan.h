@@ -2,4 +2,4 @@
 #include <string>
 using namespace std;
 
-string MainToServer(string function);
+string MainToServer(string function, int num);

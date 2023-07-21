@@ -56,7 +56,9 @@ int main(void)
 	string generateCode = GenerateRandomString();
 	const char* roomCode = generateCode.c_str();
 
-	print("\n\nYour name must be " + MainToServer("server") + "\n\n");
+	int num = 0;
+
+	//print("\n\nYour name must be " + MainToServer("server") + "\n\n");
 	
 	SetTargetFPS(60);               // Set our game to run at 60 frames-per-second
 	//--------------------------------------------------------------------------------------
@@ -115,7 +117,12 @@ int main(void)
 
 		//DrawText(roomCode, 400, 400, 50, WHITE);
 		DrawText(roomCode, screenWidth / 3.200000 + xScreenMargin, screenHeight / 1.800000 + yScreenMargin, screenWidth / 25.600000, WHITE);
+		DrawText(MainToServer("server", num).c_str(), screenWidth / 12.800000f + xScreenMargin, screenHeight / 7.200000f + yScreenMargin, screenWidth / 25.600000f, WHITE);
 
+
+		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+			num += 1;
+		}
 
 		if (IsKeyPressed(KEY_R)) {
 			float myPosX = screenWidth / testRec2.x;
@@ -127,11 +134,11 @@ int main(void)
 		}
 
 		if (IsKeyPressed(KEY_T)) {
-			float myTextPosX = screenWidth / 400.0f;
-			float myTextPosY = screenHeight / 400.0f;
+			float myTextPosX = screenWidth / 100.0f;
+			float myTextPosY = screenHeight / 100.0f;
 			float myFontSize = screenWidth / 50.0f;
 
-			print("DrawText(string, screenWidth / " + to_string(myTextPosX) + "f + xScreenMargin, screenHeight / " + to_string(myTextPosY) + "f + yScreenMargin, screenWidth / " + to_string(myFontSize) + "f, WHITE);");
+			print("DrawText(MainToServer(server).c_str(), screenWidth / " + to_string(myTextPosX) + "f + xScreenMargin, screenHeight / " + to_string(myTextPosY) + "f + yScreenMargin, screenWidth / " + to_string(myFontSize) + "f, WHITE);");
 		}
 
 		if (IsKeyPressed(KEY_N)) {
