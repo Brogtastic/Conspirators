@@ -54,13 +54,41 @@ void FrankServer(int num) {
 	auto res = client.Get(("/profile?name=" + name).c_str());
 }
 
+std::string CheckCode() {
+	// Define the URL of your Flask web page
+	std::string url = "http://127.0.0.1:8080";
+
+	// Make a GET request to the Flask web page with the roomCode as a query parameter
+	httplib::Client client(url.c_str());
+	auto res = client.Get((url + "/newroom?roomcode=1234").c_str());
+
+	std::string code;
+
+	if (res && res->status == 200) {
+		// Parse the JSON response
+		json response = json::parse(res->body);
+
+		// Access the JSON data
+		code = response["code"];
+
+	}
+	else {
+		std::cerr << "\nRequest failed.\n" << std::endl;
+		code = "Failed :(";
+	}
+
+	return code;
+
+}
+
 std::string MainToServer(std::string function, int num) {
 
 
 	std::string fun = "failed";
 	if (function == "server") {
-		fun = MyServer();
-		FrankServer(num);
+		//fun = MyServer();
+		//FrankServer(num);
+		fun = CheckCode();
 	}
 	
 	std::cout << "Main to server function successfully called";

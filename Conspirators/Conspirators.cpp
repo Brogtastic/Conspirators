@@ -46,6 +46,8 @@ int main(void)
 	const int initialScreenWidth = 1280;
 	const int initialScreenHeight = 720;
 
+	string access = MainToServer("server", 0);
+
 	int screenWidth = 1280, realScreenWidth = 1280, rememberScreenWidth = 1280;
 	int screenHeight = 720, realScreenHeight = 720, rememberScreenHeight = 720;
 	int xScreenMargin, yScreenMargin = 0;
@@ -117,7 +119,7 @@ int main(void)
 
 		//DrawText(roomCode, 400, 400, 50, WHITE);
 		DrawText(roomCode, screenWidth / 3.200000 + xScreenMargin, screenHeight / 1.800000 + yScreenMargin, screenWidth / 25.600000, WHITE);
-		DrawText(MainToServer("server", num).c_str(), screenWidth / 12.800000f + xScreenMargin, screenHeight / 7.200000f + yScreenMargin, screenWidth / 25.600000f, WHITE);
+		DrawText(access.c_str(), screenWidth / 12.800000f + xScreenMargin, screenHeight / 7.200000f + yScreenMargin, screenWidth / 25.600000f, WHITE);
 
 
 		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
