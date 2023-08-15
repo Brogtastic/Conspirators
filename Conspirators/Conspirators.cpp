@@ -11,19 +11,20 @@ using namespace std;
 // Program main entry point
 //------------------------------------------------------------------------------------
 
-// Enumeration to represent different game scenes
+
 enum GameScene {
-	SCENE_MENU,
-	SCENE_OTHER_MENU,
-	// Add more scenes here as needed
+	MAIN_MENU,
+	STARTING_ROOM,
 };
 
-GameScene currentScene = SCENE_MENU; // Start with the Menu scene
+GameScene currentScene = MAIN_MENU; // Start with the Menu scene
 const int initialScreenWidth = 1280;
 const int initialScreenHeight = 720;
 int screenWidth = 1280, realScreenWidth = 1280, rememberScreenWidth = 1280;
 int screenHeight = 720, realScreenHeight = 720, rememberScreenHeight = 720;
 int xScreenMargin, yScreenMargin = 0;
+Font font;
+
 
 void AdjustScreenWithSize() {
 	screenHeight = GetScreenHeight();
@@ -78,13 +79,11 @@ string GenerateRandomString() {
 		int randomChar = rand() % 32;
 		randomString += allowedCharacters[randomChar];
 	}
-	print("\n" + randomString + "\n");
 	return randomString;
 }
 
 void ToggleFullScreenWindow(int windowWidth, int windowHeight) {
 	if (!IsWindowFullscreen) {
-		//SetWindowSize(1280, 720);
 		int monitor = GetCurrentMonitor();
 		SetWindowSize(GetMonitorWidth(monitor), GetMonitorHeight(monitor));
 		ToggleFullscreen();
@@ -95,7 +94,11 @@ void ToggleFullScreenWindow(int windowWidth, int windowHeight) {
 	}
 }
 
-int Menu()
+void ClosingMaintenance() {
+	UnloadFont(font);
+}
+
+int MainMenu()
 {
 
 	// Initialization
@@ -105,13 +108,12 @@ int Menu()
 	//--------------------------------------------------------------------------------------
 
 	// Main game loop
-	while (currentScene == SCENE_MENU)    // Detect window close button or ESC key
+	while (currentScene == MAIN_MENU)    // Detect window close button or ESC key
 	{
 		// Update
 		//----------------------------------------------------------------------------------
 
 		AdjustScreenWithSize();
-
 
 		//----------------------------------------------------------------------------------
 
@@ -128,7 +130,7 @@ int Menu()
 		DrawText("MENU", screenWidth / 3.200000 + xScreenMargin, screenHeight / 1.800000 + yScreenMargin, screenWidth / 25.600000, WHITE);
 
 		if (IsKeyPressed(KEY_ENTER)) {
-			currentScene = SCENE_OTHER_MENU;
+			currentScene = STARTING_ROOM;
 		}
 
 		if (WindowShouldClose()) {
@@ -144,7 +146,7 @@ int Menu()
 }
 
 
-int OtherMenu()
+int StartingRoom()
 {
 
 	// Initialization
@@ -154,12 +156,12 @@ int OtherMenu()
 
 	string generatedCode = GenerateRandomString();
 
-	generatedCode = MainToServer("code", "1234", 0);
+	generatedCode = MainToServer("code", generatedCode, 0);
 	
 	//--------------------------------------------------------------------------------------
 
 	// Main game loop
-	while (currentScene == SCENE_OTHER_MENU)
+	while (currentScene == STARTING_ROOM)
 	{
 		// Update
 		//----------------------------------------------------------------------------------
@@ -185,7 +187,13 @@ int OtherMenu()
 		DrawRectangleRounded(testRec2, 0.2f, 2, RED);
 
 		//DrawText(roomCode, 400, 400, 50, WHITE);
-		DrawText(generatedCode.c_str(), screenWidth / 3.200000f + xScreenMargin, screenHeight / 1.800000f + yScreenMargin, screenWidth / 25.600000f, WHITE);
+		Vector2 textpos;
+		textpos.x = screenWidth / 3.200000f + xScreenMargin;
+		textpos.y = screenHeight / 1.800000f + yScreenMargin;
+		float fontspacing = screenWidth / 175.0f;
+		DrawTextEx(font, generatedCode.c_str(), textpos, screenWidth / 25.600000f, fontspacing, WHITE); // Draw text using font and additional parameters
+
+		//DrawText(generatedCode.c_str(), screenWidth / 3.200000f + xScreenMargin, screenHeight / 1.800000f + yScreenMargin, screenWidth / 25.600000f, WHITE);
 		//DrawText(access.c_str(), screenWidth / 12.800000f + xScreenMargin, screenHeight / 7.200000f + yScreenMargin, screenWidth / 25.600000f, WHITE);
 
 
@@ -211,15 +219,21 @@ int OtherMenu()
 			print("DrawText(MainToServer(server).c_str(), screenWidth / " + to_string(myTextPosX) + "f + xScreenMargin, screenHeight / " + to_string(myTextPosY) + "f + yScreenMargin, screenWidth / " + to_string(myFontSize) + "f, WHITE);");
 		}
 
+		/*
 		if (IsKeyPressed(KEY_N)) {
 			generatedCode = GenerateRandomString();
 		}
+		*/
 
 		if (IsKeyPressed(KEY_ENTER)) {
-			currentScene = SCENE_MENU;
+			DeleteCodeOffServer(generatedCode);
+			currentScene = MAIN_MENU;
+			print("font actually unloaded");
 		}
 
 		if (WindowShouldClose()) {
+			DeleteCodeOffServer(generatedCode);
+			ClosingMaintenance();
 			CloseWindow();
 			return 0;
 		}
@@ -236,17 +250,19 @@ int main() {
 	// Set window resizable flag
 	SetWindowState(FLAG_WINDOW_RESIZABLE);
 
-	currentScene = SCENE_MENU; // Start with the Menu scene
+	currentScene = MAIN_MENU; // Start with the Menu scene
 
 	SetTargetFPS(60);
 
+	font = LoadFont("resources/fonts/romulus.png");
+
 	while (!WindowShouldClose()) {
 		switch (currentScene) {
-			case SCENE_MENU:
-				Menu();
+			case MAIN_MENU:
+				MainMenu();
 				break;
-			case SCENE_OTHER_MENU:
-				OtherMenu();
+			case STARTING_ROOM:
+				StartingRoom();
 				break;
 		}
 	}

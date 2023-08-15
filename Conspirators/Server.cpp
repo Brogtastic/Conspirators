@@ -86,11 +86,11 @@ string CheckCode(string generatedCode) {
 			access = response["access"];
 
 			if (access == "granted") {
-				print("ACCESS GRANTED");
+				print("\nACCESS GRANTED");
 				return generatedCode;
 			}
 			else {
-				print("ACCESS DENIED");
+				print("\nACCESS DENIED");
 				generatedCode = GenerateRandomerString();
 			}
 
@@ -103,6 +103,32 @@ string CheckCode(string generatedCode) {
 
 }
 
+void DeleteCodeOffServer(string deleteCode) {
+	string url = "http://127.0.0.1:8080";
+
+	httplib::Client client(url.c_str());
+	auto res = client.Get((url + "/deleteroom?roomcode=" + deleteCode).c_str());
+
+	if (res && res->status == 200) {
+		// Parse the JSON response
+		json response = json::parse(res->body);
+
+		// Access the JSON data
+		string status = response["status"];
+
+		if (status == "Code Deleted") {
+			print("\nCODE DELETED");
+		}
+		else {
+			print("\nCode was never present");
+		}
+
+	}
+	else {
+		print("request failed");
+	}
+}
+
 string MainToServer(string function, string code, int num) {
 
 	string fun = "failed";
@@ -110,7 +136,7 @@ string MainToServer(string function, string code, int num) {
 		fun = MyServer(); // Gets the Json from the /json address
 	}
 	else if (function == "code") {
-		//fun = CheckCode(code); // Checks to see if the generated code is in the website or not. 'Granted' or 'Denied'
+		fun = CheckCode(code); // Checks to see if the generated code is in the website or not. 'Granted' or 'Denied'
 	}
 	else if (function == "number") {
 		FrankServer(num); // Sends variable name to website
