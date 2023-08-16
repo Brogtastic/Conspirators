@@ -34,7 +34,7 @@ string MyServer(string mainRoomCode) {
 	string url = "http://127.0.0.1:8080"; // Replace with the correct URL
 
 	if (!doesURLExist(url, mainRoomCode)) {
-		return("No players in room");
+		return("URL Does not exist.");
 	}
 
 	string roomCode;
@@ -69,7 +69,6 @@ string MyServer(string mainRoomCode) {
 		roomCode.erase(std::remove(roomCode.begin(), roomCode.end(), '"'), roomCode.end());
 
 		if (roomCode == mainRoomCode) {
-			print("Name returned");
 			return "MEMBERS: " + all_names;
 		}
 		else {
@@ -83,7 +82,6 @@ string MyServer(string mainRoomCode) {
 }
 
 void FrankServer(int num) {
-	cout << "MyServer function successfully called";
 
 	// Define the URL of your Flask web page
 	string url = "http://127.0.0.1:8080"; // Replace with the correct URL
@@ -113,17 +111,17 @@ string CheckCode(string generatedCode) {
 			access = response["access"];
 
 			if (access == "granted") {
-				print("\nACCESS GRANTED");
+				print("\nRoom Code added to server\n");
 				return generatedCode;
 			}
 			else {
-				print("\nACCESS DENIED");
+				print("\nRoom code not added to server\n");
 				generatedCode = GenerateRandomerString();
 			}
 
 		}
 		else {
-			return "request failed";
+			return "Check Code request failed";
 		}
 	}
 	return "Something went wrong";
@@ -143,11 +141,11 @@ void DeleteCodeOffServer(string deleteCode) {
 		// Access the JSON data
 		string status = response["status"];
 
-		if (status == "Code Deleted") {
-			print("\nCODE DELETED");
+		if (status == "Code Deleted and Room Removed") {
+			print("\nCode Deleted and Room Removed");
 		}
 		else {
-			print("\nCode was never present");
+			print("\nCode Not Present");
 		}
 
 	}

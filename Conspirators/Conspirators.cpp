@@ -3,6 +3,7 @@
 #include <iostream>
 #include <string>
 #include <list>
+#include <vector>
 #define GetIntArrayLength(x) sizeof(x) / sizeof(int)
 using namespace std;
 #define print(x) cout << x
@@ -24,6 +25,7 @@ int screenWidth = 1280, realScreenWidth = 1280, rememberScreenWidth = 1280;
 int screenHeight = 720, realScreenHeight = 720, rememberScreenHeight = 720;
 int xScreenMargin, yScreenMargin = 0;
 Font font;
+vector<string> allGeneratedCodes;
 
 
 void AdjustScreenWithSize() {
@@ -94,8 +96,9 @@ void ToggleFullScreenWindow(int windowWidth, int windowHeight) {
 	}
 }
 
-void ClosingMaintenance() {
+void ClosingMaintenance(string generatedCode) {
 	UnloadFont(font);
+	DeleteCodeOffServer(generatedCode);
 }
 
 int MainMenu()
@@ -151,6 +154,13 @@ int StartingRoom()
 	string generatedCode = GenerateRandomString();
 
 	generatedCode = CheckCode(generatedCode);
+
+	allGeneratedCodes.push_back(generatedCode);
+
+	while (allGeneratedCodes.size() > 1) {
+		DeleteCodeOffServer(allGeneratedCodes[0]);
+		allGeneratedCodes.erase(allGeneratedCodes.begin());
+	}
 
 	string displayName = MyServer(generatedCode);
 	
@@ -225,14 +235,12 @@ int StartingRoom()
 		}
 
 		if (IsKeyPressed(KEY_ENTER)) {
-			DeleteCodeOffServer(generatedCode);
+			generatedCode = GenerateRandomString();
 			currentScene = MAIN_MENU;
-			print("font actually unloaded");
 		}
 
 		if (WindowShouldClose()) {
-			DeleteCodeOffServer(generatedCode);
-			ClosingMaintenance();
+			ClosingMaintenance(generatedCode);
 			CloseWindow();
 			return 0;
 		}
@@ -266,6 +274,7 @@ int main() {
 		}
 	}
 
+	UnloadFont(font);
 	CloseWindow();
 	return 0;
 }
