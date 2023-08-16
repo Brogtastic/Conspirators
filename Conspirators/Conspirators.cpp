@@ -101,14 +101,7 @@ void ClosingMaintenance() {
 int MainMenu()
 {
 
-	// Initialization
-	//--------------------------------------------------------------------------------------
-
-
-	//--------------------------------------------------------------------------------------
-
-	// Main game loop
-	while (currentScene == MAIN_MENU)    // Detect window close button or ESC key
+	while (currentScene == MAIN_MENU)
 	{
 		// Update
 		//----------------------------------------------------------------------------------
@@ -153,20 +146,27 @@ int StartingRoom()
 	//--------------------------------------------------------------------------------------
 
 	int num = 0;
+	int frame = 0;
 
 	string generatedCode = GenerateRandomString();
 
-	generatedCode = MainToServer("code", generatedCode, 0);
+	generatedCode = CheckCode(generatedCode);
+
+	string displayName = MyServer(generatedCode);
 	
 	//--------------------------------------------------------------------------------------
 
-	// Main game loop
+	// game loop
 	while (currentScene == STARTING_ROOM)
 	{
 		// Update
 		//----------------------------------------------------------------------------------
 
 		AdjustScreenWithSize();
+		frame += 1;
+		if (frame > 60) {
+			frame = 0;
+		}
 
 		//----------------------------------------------------------------------------------
 
@@ -193,13 +193,18 @@ int StartingRoom()
 		float fontspacing = screenWidth / 175.0f;
 		DrawTextEx(font, generatedCode.c_str(), textpos, screenWidth / 25.600000f, fontspacing, WHITE); // Draw text using font and additional parameters
 
-		//DrawText(generatedCode.c_str(), screenWidth / 3.200000f + xScreenMargin, screenHeight / 1.800000f + yScreenMargin, screenWidth / 25.600000f, WHITE);
+		if (frame == 60) {
+			displayName = MyServer(generatedCode);
+		}
+
+		DrawText(displayName.c_str(), screenWidth / 3.200000f + xScreenMargin, screenHeight / 2.100000f + yScreenMargin, screenWidth / 25.600000f, WHITE);
+		
 		//DrawText(access.c_str(), screenWidth / 12.800000f + xScreenMargin, screenHeight / 7.200000f + yScreenMargin, screenWidth / 25.600000f, WHITE);
 
 
 		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
 			num += 1;
-			string access = MainToServer("number", "1234", num);
+			FrankServer(num);
 		}
 
 		if (IsKeyPressed(KEY_R)) {
@@ -218,12 +223,6 @@ int StartingRoom()
 
 			print("DrawText(MainToServer(server).c_str(), screenWidth / " + to_string(myTextPosX) + "f + xScreenMargin, screenHeight / " + to_string(myTextPosY) + "f + yScreenMargin, screenWidth / " + to_string(myFontSize) + "f, WHITE);");
 		}
-
-		/*
-		if (IsKeyPressed(KEY_N)) {
-			generatedCode = GenerateRandomString();
-		}
-		*/
 
 		if (IsKeyPressed(KEY_ENTER)) {
 			DeleteCodeOffServer(generatedCode);

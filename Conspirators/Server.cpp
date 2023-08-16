@@ -7,6 +7,8 @@ using namespace std;
 
 using json = nlohmann::json;
 
+string secret_key = "agekvoslfhfgaye6382m4i201nui32h078hrauipbvluag78e4tg4w3liutbh2q89897wrgh4ui3gh2780gbrwauy";
+
 string GenerateRandomerString() {
 	const string allowedCharacters = "123456789ABCDEFGHIJKLMNPQRSTUVWXYZ"; // Removed the O and the 0 cause too similar looking
 	string randomString;
@@ -18,20 +20,29 @@ string GenerateRandomerString() {
 	return randomString;
 }
 
-string MyServer() {
+bool doesURLExist(const string& url, string roomCode) {
+	httplib::Client client(url.c_str());
 
-	cout << "MyServer function successfully called";
+	auto res = client.Head("/play/" + roomCode);
+
+	return res && (res->status == 200);
+}
+
+string MyServer(string mainRoomCode) {
 
 	// Define the URL of your Flask web page
 	string url = "http://127.0.0.1:8080"; // Replace with the correct URL
 
-	string name = "No Name";
-	string test = "No Test";
-	int coolness = 0;
+	if (!doesURLExist(url, mainRoomCode)) {
+		return("No players in room");
+	}
+
+	string roomCode;
+	string members;
 
 	// Make a GET request to the Flask web page
 	httplib::Client client(url.c_str());
-	auto res = client.Get("/json");
+	auto res = client.Get((url + "/play/" + mainRoomCode + "?secret_key=" + secret_key).c_str());
 
 	// Check if the request was successful
 	if (res && res->status == 200) {
@@ -39,20 +50,36 @@ string MyServer() {
 		json response = json::parse(res->body);
 
 		// Access the JSON data
-		name = response["name"];
-		int coolness = response["coolness"];
-		test = response["test"];
+		// Extract the "members" array
+		json members = response["members"];
+		print(members);
 
-		// Print the JSON data
-		cout << "Name: " << name << endl;
-		cout << "Coolness: " << coolness << endl;
-		cout << "Test: " << test << endl;
+		string all_names;
+		for (const auto& member : members) {
+			string name = member["name"];
+			all_names += name + ", ";
+		}
+
+		// Remove the trailing comma and space
+		if (!all_names.empty()) {
+			all_names = all_names.substr(0, all_names.size() - 2);
+		}
+
+		roomCode = to_string(response["roomCode"]);
+		roomCode.erase(std::remove(roomCode.begin(), roomCode.end(), '"'), roomCode.end());
+
+		if (roomCode == mainRoomCode) {
+			print("Name returned");
+			return "MEMBERS: " + all_names;
+		}
+		else {
+			return "Wrong Room Code" + roomCode;
+		}
 	}
 	else {
-		cerr << "\nRequest failed.\n" << endl;
+		cerr << "\n Play Request Failed.\n" << endl;
+		return "Request Failed";
 	}
-
-	return test;
 }
 
 void FrankServer(int num) {
@@ -60,11 +87,11 @@ void FrankServer(int num) {
 
 	// Define the URL of your Flask web page
 	string url = "http://127.0.0.1:8080"; // Replace with the correct URL
-	string name = "Billy Bob" + to_string(num); // Set the desired name
+	string number = to_string(num); // Set the desired name
 
 	// Make a GET request to the Flask web page with the name as a query parameter
 	httplib::Client client(url.c_str());
-	auto res = client.Get(("/profile?name=" + name).c_str());
+	auto res = client.Get(("/profile?number=" + number).c_str());
 }
 
 string CheckCode(string generatedCode) {
@@ -127,22 +154,5 @@ void DeleteCodeOffServer(string deleteCode) {
 	else {
 		print("request failed");
 	}
-}
-
-string MainToServer(string function, string code, int num) {
-
-	string fun = "failed";
-	if (function == "json") {
-		fun = MyServer(); // Gets the Json from the /json address
-	}
-	else if (function == "code") {
-		fun = CheckCode(code); // Checks to see if the generated code is in the website or not. 'Granted' or 'Denied'
-	}
-	else if (function == "number") {
-		FrankServer(num); // Sends variable name to website
-	}
-
-	return fun;
-
 }
 
