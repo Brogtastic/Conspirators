@@ -2,8 +2,8 @@
 #include <string>
 using namespace std;
 
-string MainToServer(string function, string code, int num);
 string CheckCode(string generatedCode);
 void DeleteCodeOffServer(string deleteCode);
-string MyServer(string mainRoomCode);
-void FrankServer(int num);
+string GetMembers(string mainRoomCode, string order);
+void TransferClicks(int num);
+bool DoesURLExist(string roomCode);

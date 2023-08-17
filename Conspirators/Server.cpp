@@ -2,12 +2,14 @@
 #include <cpp_httplib/httplib.h>
 #include <nlohmann/json.hpp>
 #include <string>
+#include <vector>
 using namespace std;
 #define print(x) cout << x
 
 using json = nlohmann::json;
 
 string secret_key = "agekvoslfhfgaye6382m4i201nui32h078hrauipbvluag78e4tg4w3liutbh2q89897wrgh4ui3gh2780gbrwauy";
+string url = "http://127.0.0.1:8080";
 
 string GenerateRandomerString() {
 	const string allowedCharacters = "123456789ABCDEFGHIJKLMNPQRSTUVWXYZ"; // Removed the O and the 0 cause too similar looking
@@ -20,44 +22,39 @@ string GenerateRandomerString() {
 	return randomString;
 }
 
-bool doesURLExist(const string& url, string roomCode) {
+bool DoesURLExist(string extension) {
 	httplib::Client client(url.c_str());
 
-	auto res = client.Head("/play/" + roomCode);
+	auto res = client.Head("/" + extension);
 
 	return res && (res->status == 200);
 }
 
-string MyServer(string mainRoomCode) {
+string GetMembers(string mainRoomCode, string order) {
 
-	// Define the URL of your Flask web page
-	string url = "http://127.0.0.1:8080"; // Replace with the correct URL
-
-	if (!doesURLExist(url, mainRoomCode)) {
-		return("URL Does not exist.");
+	if (!DoesURLExist(secret_key + "/play/members-info/" + mainRoomCode)) {
+		return("");
 	}
+
+	vector<string> membersList;
 
 	string roomCode;
 	string members;
 
-	// Make a GET request to the Flask web page
 	httplib::Client client(url.c_str());
-	auto res = client.Get((url + "/play/" + mainRoomCode + "?secret_key=" + secret_key).c_str());
+	auto res = client.Get((url + "/" + secret_key + "/play/members-info/" + mainRoomCode + "?secret_key=" + secret_key).c_str());
 
-	// Check if the request was successful
 	if (res && res->status == 200) {
-		// Parse the JSON response
 		json response = json::parse(res->body);
 
-		// Access the JSON data
-		// Extract the "members" array
 		json members = response["members"];
-		print(members);
+		//print(members);
 
 		string all_names;
 		for (const auto& member : members) {
 			string name = member["name"];
 			all_names += name + ", ";
+			membersList.push_back(name);
 		}
 
 		// Remove the trailing comma and space
@@ -68,11 +65,25 @@ string MyServer(string mainRoomCode) {
 		roomCode = to_string(response["roomCode"]);
 		roomCode.erase(std::remove(roomCode.begin(), roomCode.end(), '"'), roomCode.end());
 
-		if (roomCode == mainRoomCode) {
+		if (order == "members") {
 			return "MEMBERS: " + all_names;
 		}
-		else {
-			return "Wrong Room Code" + roomCode;
+		else if (order == "numberOfMembers") {
+			return to_string(membersList.size());
+		}
+		else if (order == "firstMember") {
+			if (membersList.size() > 2) {
+				return "Waiting for " + membersList[0] + " to start the game...";
+			}
+			else if (membersList.size() == 1) {
+				return "Need at least 2 more players to begin";
+			}
+			else if (membersList.size() == 2) {
+				return "Need at least 1 more players to begin";
+			}
+			else {
+				return "No players in room...";
+			}
 		}
 	}
 	else {
@@ -81,33 +92,25 @@ string MyServer(string mainRoomCode) {
 	}
 }
 
-void FrankServer(int num) {
+void TransferClicks(int num) {
 
-	// Define the URL of your Flask web page
-	string url = "http://127.0.0.1:8080"; // Replace with the correct URL
-	string number = to_string(num); // Set the desired name
+	string number = to_string(num); 
 
-	// Make a GET request to the Flask web page with the name as a query parameter
 	httplib::Client client(url.c_str());
 	auto res = client.Get(("/profile?number=" + number).c_str());
 }
 
 string CheckCode(string generatedCode) {
-	// Define the URL of your Flask web page
-	string url = "http://127.0.0.1:8080";
 
 	for (int i = 0; i < 1000; i++) {
-		// Make a GET request to the Flask web page with the roomCode as a query parameter
 		httplib::Client client(url.c_str());
 		auto res = client.Get((url + "/newroom?roomcode=" + generatedCode).c_str());
 
 		string access;
 
 		if (res && res->status == 200) {
-			// Parse the JSON response
 			json response = json::parse(res->body);
 
-			// Access the JSON data
 			access = response["access"];
 
 			if (access == "granted") {
@@ -129,16 +132,13 @@ string CheckCode(string generatedCode) {
 }
 
 void DeleteCodeOffServer(string deleteCode) {
-	string url = "http://127.0.0.1:8080";
 
 	httplib::Client client(url.c_str());
 	auto res = client.Get((url + "/deleteroom?roomcode=" + deleteCode).c_str());
 
 	if (res && res->status == 200) {
-		// Parse the JSON response
 		json response = json::parse(res->body);
 
-		// Access the JSON data
 		string status = response["status"];
 
 		if (status == "Code Deleted and Room Removed") {

@@ -72,6 +72,10 @@ void AdjustScreenWithSize() {
 			SetWindowSize(rememberScreenWidth, rememberScreenHeight);
 		}
 	}
+	if (IsKeyPressed(KEY_ESCAPE) && IsWindowFullscreen()) {
+		ToggleFullscreen();
+		SetWindowSize(rememberScreenWidth, rememberScreenHeight);
+	}
 }
 
 string GenerateRandomString() {
@@ -82,6 +86,13 @@ string GenerateRandomString() {
 		randomString += allowedCharacters[randomChar];
 	}
 	return randomString;
+}
+
+void LimitRoomCodes(int limit) {
+	while (allGeneratedCodes.size() > limit) {
+		DeleteCodeOffServer(allGeneratedCodes[0]);
+		allGeneratedCodes.erase(allGeneratedCodes.begin());
+	}
 }
 
 void ToggleFullScreenWindow(int windowWidth, int windowHeight) {
@@ -96,20 +107,44 @@ void ToggleFullScreenWindow(int windowWidth, int windowHeight) {
 	}
 }
 
-void ClosingMaintenance(string generatedCode) {
+void ClosingMaintenance() {
 	UnloadFont(font);
-	DeleteCodeOffServer(generatedCode);
+	LimitRoomCodes(0);
 }
 
 int MainMenu()
 {
+	LimitRoomCodes(0);
+
+	string statusOfServer = "";
+
+	int urlCheckInterval = 0;
+
+	if (!DoesURLExist("")) {
+		statusOfServer = "Servers are down. Cannot create room.";
+	}
 
 	while (currentScene == MAIN_MENU)
 	{
 		// Update
 		//----------------------------------------------------------------------------------
+		if (urlCheckInterval < 240) {
+			urlCheckInterval += 1;
+		}
+		else {
+			urlCheckInterval = 0;
+		}
 
 		AdjustScreenWithSize();
+
+		if (urlCheckInterval == 240) {
+			if (DoesURLExist("")) {
+				statusOfServer = "";
+			}
+			else {
+				statusOfServer = "Servers are down. Cannot create room.";
+			}
+		}
 
 		//----------------------------------------------------------------------------------
 
@@ -124,12 +159,15 @@ int MainMenu()
 		DrawRectangleRec(testBG, ORANGE);
 
 		DrawText("MENU", screenWidth / 3.200000 + xScreenMargin, screenHeight / 1.800000 + yScreenMargin, screenWidth / 25.600000, WHITE);
+		DrawText(statusOfServer.c_str(), screenWidth / 5.200000 + xScreenMargin, screenHeight / 1.400000 + yScreenMargin, screenWidth / 25.600000, WHITE);
 
-		if (IsKeyPressed(KEY_ENTER)) {
+		if (IsKeyPressed(KEY_ENTER) && (statusOfServer == "")) {
 			currentScene = STARTING_ROOM;
+
 		}
 
 		if (WindowShouldClose()) {
+			ClosingMaintenance();
 			CloseWindow();
 			return 0;
 		}
@@ -157,12 +195,11 @@ int StartingRoom()
 
 	allGeneratedCodes.push_back(generatedCode);
 
-	while (allGeneratedCodes.size() > 1) {
-		DeleteCodeOffServer(allGeneratedCodes[0]);
-		allGeneratedCodes.erase(allGeneratedCodes.begin());
-	}
+	LimitRoomCodes(1);
 
-	string displayName = MyServer(generatedCode);
+	string membersNames = GetMembers(generatedCode, "members");
+	string firstMember = GetMembers(generatedCode, "firstMember");
+	string numberOfMembers = "0/8";
 	
 	//--------------------------------------------------------------------------------------
 
@@ -177,6 +214,9 @@ int StartingRoom()
 		if (frame > 60) {
 			frame = 0;
 		}
+
+		float fontspacing = screenWidth / 175.0f;
+		float fontsize = screenWidth / 25.600000f;
 
 		//----------------------------------------------------------------------------------
 
@@ -196,25 +236,27 @@ int StartingRoom()
 		DrawRectangleRounded(testRec, 0.2f, 2, RAYWHITE);
 		DrawRectangleRounded(testRec2, 0.2f, 2, RED);
 
-		//DrawText(roomCode, 400, 400, 50, WHITE);
-		Vector2 textpos;
-		textpos.x = screenWidth / 3.200000f + xScreenMargin;
-		textpos.y = screenHeight / 1.800000f + yScreenMargin;
-		float fontspacing = screenWidth / 175.0f;
-		DrawTextEx(font, generatedCode.c_str(), textpos, screenWidth / 25.600000f, fontspacing, WHITE); // Draw text using font and additional parameters
+		//DrawTextEx(font, string, vector2position, fontsize, fontspacing, color);
+		DrawTextEx(font, generatedCode.c_str(), { screenWidth / 3.200000f + xScreenMargin, screenHeight / 1.800000f + yScreenMargin }, fontsize, fontspacing, WHITE);
 
-		if (frame == 60) {
-			displayName = MyServer(generatedCode);
+		if (frame%3 == 0) {
+			membersNames = GetMembers(generatedCode, "members");
+			firstMember = GetMembers(generatedCode, "firstMember");
+			numberOfMembers = GetMembers(generatedCode, "numberOfMembers") + "/8";
+		}
+		if (membersNames == "" || firstMember == "" || numberOfMembers == "") {
+			currentScene = MAIN_MENU;
 		}
 
-		DrawText(displayName.c_str(), screenWidth / 3.200000f + xScreenMargin, screenHeight / 2.100000f + yScreenMargin, screenWidth / 25.600000f, WHITE);
-		
+		DrawText(membersNames.c_str(), screenWidth / 3.200000f + xScreenMargin, screenHeight / 2.100000f + yScreenMargin, screenWidth / 25.600000f, WHITE);
+		DrawText(firstMember.c_str(), screenWidth / 4.200000f + xScreenMargin, screenHeight / 1.100000f + yScreenMargin, screenWidth / 25.600000f, WHITE);
+		DrawText(numberOfMembers.c_str(), screenWidth / 100.200000f + xScreenMargin, screenHeight / 100.100000f + yScreenMargin, screenWidth / 25.600000f, WHITE);
 		//DrawText(access.c_str(), screenWidth / 12.800000f + xScreenMargin, screenHeight / 7.200000f + yScreenMargin, screenWidth / 25.600000f, WHITE);
 
 
 		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
 			num += 1;
-			FrankServer(num);
+			TransferClicks(num);
 		}
 
 		if (IsKeyPressed(KEY_R)) {
@@ -240,7 +282,7 @@ int StartingRoom()
 		}
 
 		if (WindowShouldClose()) {
-			ClosingMaintenance(generatedCode);
+			ClosingMaintenance();
 			CloseWindow();
 			return 0;
 		}
@@ -261,6 +303,8 @@ int main() {
 
 	SetTargetFPS(60);
 
+	SetExitKey(0);
+
 	font = LoadFont("resources/fonts/romulus.png");
 
 	while (!WindowShouldClose()) {
@@ -274,7 +318,7 @@ int main() {
 		}
 	}
 
-	UnloadFont(font);
+	ClosingMaintenance();
 	CloseWindow();
 	return 0;
 }
