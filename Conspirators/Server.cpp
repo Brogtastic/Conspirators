@@ -9,7 +9,8 @@ using namespace std;
 using json = nlohmann::json;
 
 string secret_key = "agekvoslfhfgaye6382m4i201nui32h078hrauipbvluag78e4tg4w3liutbh2q89897wrgh4ui3gh2780gbrwauy";
-string url = "http://127.0.0.1:8080";
+//string url = "http://127.0.0.1:8080"; //LOCAL SERVER
+string url = "http://52.15.115.37"; //PUBLIC SERVER
 
 string GenerateRandomerString() {
 	const string allowedCharacters = "123456789ABCDEFGHIJKLMNPQRSTUVWXYZ"; // Removed the O and the 0 cause too similar looking
@@ -30,10 +31,12 @@ bool DoesURLExist(string extension) {
 	return res && (res->status == 200);
 }
 
-string GetMembers(string mainRoomCode, string order) {
+vector<string> RefreshMembers(string mainRoomCode) {
+
+	vector<string> membersReturn = { "", "", "" };
 
 	if (!DoesURLExist(secret_key + "/play/members-info/" + mainRoomCode)) {
-		return("");
+		return membersReturn;
 	}
 
 	vector<string> membersList;
@@ -65,31 +68,29 @@ string GetMembers(string mainRoomCode, string order) {
 		roomCode = to_string(response["roomCode"]);
 		roomCode.erase(std::remove(roomCode.begin(), roomCode.end(), '"'), roomCode.end());
 
-		if (order == "members") {
-			return "MEMBERS: " + all_names;
+		membersReturn[0] = "MEMBERS: " + all_names;
+		membersReturn[1] = to_string(membersList.size());
+		
+		if (membersList.size() > 2) {
+			membersReturn[2] = "Waiting for " + membersList[0] + " to start the game...";
 		}
-		else if (order == "numberOfMembers") {
-			return to_string(membersList.size());
+		else if (membersList.size() == 1) {
+			membersReturn[2] = "Need at least 2 more players to begin";
 		}
-		else if (order == "firstMember") {
-			if (membersList.size() > 2) {
-				return "Waiting for " + membersList[0] + " to start the game...";
-			}
-			else if (membersList.size() == 1) {
-				return "Need at least 2 more players to begin";
-			}
-			else if (membersList.size() == 2) {
-				return "Need at least 1 more players to begin";
-			}
-			else {
-				return "No players in room...";
-			}
+		else if (membersList.size() == 2) {
+			membersReturn[2] = "Need at least 1 more players to begin";
 		}
+		else {
+			membersReturn[2] = "No players in room...";
+		}
+
 	}
 	else {
 		cerr << "\n Play Request Failed.\n" << endl;
-		return "Request Failed";
 	}
+
+	return membersReturn;
+
 }
 
 void TransferClicks(int num) {

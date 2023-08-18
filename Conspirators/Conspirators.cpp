@@ -197,9 +197,11 @@ int StartingRoom()
 
 	LimitRoomCodes(1);
 
-	string membersNames = GetMembers(generatedCode, "members");
-	string firstMember = GetMembers(generatedCode, "firstMember");
+	vector<string> membersVector = RefreshMembers(generatedCode);
+
+	string membersNames = membersVector[0];
 	string numberOfMembers = "0/8";
+	string firstMember = membersVector[2];
 	
 	//--------------------------------------------------------------------------------------
 
@@ -239,14 +241,14 @@ int StartingRoom()
 		//DrawTextEx(font, string, vector2position, fontsize, fontspacing, color);
 		DrawTextEx(font, generatedCode.c_str(), { screenWidth / 3.200000f + xScreenMargin, screenHeight / 1.800000f + yScreenMargin }, fontsize, fontspacing, WHITE);
 
-		if (frame%3 == 0) {
-			membersNames = GetMembers(generatedCode, "members");
-			firstMember = GetMembers(generatedCode, "firstMember");
-			numberOfMembers = GetMembers(generatedCode, "numberOfMembers") + "/8";
+		if (frame%4 == 0) {
+			vector<string> membersVector = RefreshMembers(generatedCode);
+
+			membersNames = membersVector[0];
+			numberOfMembers = membersVector[1] + "/8";
+			firstMember = membersVector[2];
 		}
-		if (membersNames == "" || firstMember == "" || numberOfMembers == "") {
-			currentScene = MAIN_MENU;
-		}
+
 
 		DrawText(membersNames.c_str(), screenWidth / 3.200000f + xScreenMargin, screenHeight / 2.100000f + yScreenMargin, screenWidth / 25.600000f, WHITE);
 		DrawText(firstMember.c_str(), screenWidth / 4.200000f + xScreenMargin, screenHeight / 1.100000f + yScreenMargin, screenWidth / 25.600000f, WHITE);
@@ -277,7 +279,6 @@ int StartingRoom()
 		}
 
 		if (IsKeyPressed(KEY_ENTER)) {
-			generatedCode = GenerateRandomString();
 			currentScene = MAIN_MENU;
 		}
 
@@ -322,3 +323,17 @@ int main() {
 	CloseWindow();
 	return 0;
 }
+
+
+/*
+
+60 numbers divisible by 1
+30 numbers divisible by 2
+20 numbers divisible by 3
+12 numbers divisible by 4
+12 numbers divisible by 5
+10 numbers divisible by 6
+8 numbers divisible by 7
+7 numbers divisible by 8
+
+*/
