@@ -16,9 +16,10 @@ using namespace std;
 enum GameScene {
 	MAIN_MENU,
 	STARTING_ROOM,
+	ROUND_1
 };
 
-GameScene currentScene = MAIN_MENU; // Start with the Menu scene
+GameScene currentScene;
 const int initialScreenWidth = 1280;
 const int initialScreenHeight = 720;
 int screenWidth = 1280, realScreenWidth = 1280, rememberScreenWidth = 1280;
@@ -117,33 +118,34 @@ int MainMenu()
 	LimitRoomCodes(0);
 
 	string statusOfServer = "";
+	bool serverOnline;
 
 	int urlCheckInterval = 0;
 
 	if (!DoesURLExist("")) {
 		statusOfServer = "Servers are down. Cannot create room.";
+		serverOnline = false;
+	}
+	else {
+		serverOnline = true;
 	}
 
 	while (currentScene == MAIN_MENU)
 	{
 		// Update
 		//----------------------------------------------------------------------------------
-		if (urlCheckInterval < 240) {
-			urlCheckInterval += 1;
-		}
-		else {
-			urlCheckInterval = 0;
-		}
 
 		AdjustScreenWithSize();
+		
+		if (IsKeyPressed(KEY_R)) {
+			serverOnline = DoesURLExist("");
+		}
 
-		if (urlCheckInterval == 240) {
-			if (DoesURLExist("")) {
-				statusOfServer = "";
-			}
-			else {
-				statusOfServer = "Servers are down. Cannot create room.";
-			}
+		if (!serverOnline) {
+			statusOfServer = "Servers are down. Cannot create room. Press 'R' to refresh.";
+		}
+		else {
+			statusOfServer = "";
 		}
 
 		//----------------------------------------------------------------------------------
@@ -158,12 +160,11 @@ int MainMenu()
 		Rectangle testBG = { xScreenMargin, yScreenMargin, screenWidth, screenHeight };
 		DrawRectangleRec(testBG, ORANGE);
 
-		DrawText("MENU", screenWidth / 3.200000 + xScreenMargin, screenHeight / 1.800000 + yScreenMargin, screenWidth / 25.600000, WHITE);
-		DrawText(statusOfServer.c_str(), screenWidth / 5.200000 + xScreenMargin, screenHeight / 1.400000 + yScreenMargin, screenWidth / 25.600000, WHITE);
+		DrawText("MENU", screenWidth / 3.200000f + xScreenMargin, screenHeight / 1.800000f + yScreenMargin, screenWidth / 25.600000f, WHITE);
+		DrawText(statusOfServer.c_str(), screenWidth / 7.200000f + xScreenMargin, screenHeight / 1.1000f + yScreenMargin, screenWidth / 60.600000f, WHITE);
 
-		if (IsKeyPressed(KEY_ENTER) && (statusOfServer == "")) {
+		if (IsKeyPressed(KEY_ENTER) && (serverOnline == true)) {
 			currentScene = STARTING_ROOM;
-
 		}
 
 		if (WindowShouldClose()) {
@@ -188,6 +189,8 @@ int StartingRoom()
 
 	int num = 0;
 	int frame = 0;
+	bool onRed = false;
+	bool onRedClick = false;
 
 	string generatedCode = GenerateRandomString();
 
@@ -211,7 +214,10 @@ int StartingRoom()
 		// Update
 		//----------------------------------------------------------------------------------
 
+		Vector2 mousePos = GetMousePosition();
+
 		AdjustScreenWithSize();
+
 		frame += 1;
 		if (frame > 60) {
 			frame = 0;
@@ -241,18 +247,22 @@ int StartingRoom()
 		//DrawTextEx(font, string, vector2position, fontsize, fontspacing, color);
 		DrawTextEx(font, generatedCode.c_str(), { screenWidth / 3.200000f + xScreenMargin, screenHeight / 1.800000f + yScreenMargin }, fontsize, fontspacing, WHITE);
 
-		if (frame%4 == 0) {
+		if ((frame%9 == 0) && !IsKeyPressed(KEY_ENTER)) {
 			vector<string> membersVector = RefreshMembers(generatedCode);
 
 			membersNames = membersVector[0];
 			numberOfMembers = membersVector[1] + "/8";
 			firstMember = membersVector[2];
+
+			if (membersVector[3] == "round1") {
+				currentScene = ROUND_1;
+			}
 		}
 
 
-		DrawText(membersNames.c_str(), screenWidth / 3.200000f + xScreenMargin, screenHeight / 2.100000f + yScreenMargin, screenWidth / 25.600000f, WHITE);
-		DrawText(firstMember.c_str(), screenWidth / 4.200000f + xScreenMargin, screenHeight / 1.100000f + yScreenMargin, screenWidth / 25.600000f, WHITE);
-		DrawText(numberOfMembers.c_str(), screenWidth / 100.200000f + xScreenMargin, screenHeight / 100.100000f + yScreenMargin, screenWidth / 25.600000f, WHITE);
+		DrawTextEx(font, membersNames.c_str(), { screenWidth / 3.200000f + xScreenMargin, screenHeight / 2.100000f + yScreenMargin }, screenWidth / 25.600000f, fontspacing, WHITE);
+		DrawTextEx(font, firstMember.c_str(), { screenWidth / 4.200000f + xScreenMargin, screenHeight / 1.100000f + yScreenMargin }, screenWidth / 25.600000f, fontspacing, WHITE);
+		DrawTextEx(font, numberOfMembers.c_str(), { screenWidth / 100.200000f + xScreenMargin, screenHeight / 100.100000f + yScreenMargin }, screenWidth / 25.600000f, fontspacing, WHITE);
 		//DrawText(access.c_str(), screenWidth / 12.800000f + xScreenMargin, screenHeight / 7.200000f + yScreenMargin, screenWidth / 25.600000f, WHITE);
 
 
@@ -278,9 +288,26 @@ int StartingRoom()
 			print("DrawText(MainToServer(server).c_str(), screenWidth / " + to_string(myTextPosX) + "f + xScreenMargin, screenHeight / " + to_string(myTextPosY) + "f + yScreenMargin, screenWidth / " + to_string(myFontSize) + "f, WHITE);");
 		}
 
-		if (IsKeyPressed(KEY_ENTER)) {
+		if (IsKeyPressed(KEY_ENTER)){
 			currentScene = MAIN_MENU;
 		}
+
+		if (CheckCollisionPointRec(mousePos, testRec2)) {
+			onRed = true;
+		}
+		else {
+			onRed = false;
+		}
+		if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) && onRed == true) {
+			onRedClick = true;
+		}
+		if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && onRed == false) {
+			onRedClick = false;
+		}
+		if (IsMouseButtonUp(MOUSE_BUTTON_LEFT) && (onRedClick == true)) {
+			currentScene = MAIN_MENU;
+		}
+
 
 		if (WindowShouldClose()) {
 			ClosingMaintenance();
@@ -293,6 +320,67 @@ int StartingRoom()
 	}
 }
 
+
+int Round1()
+{
+
+	// Initialization
+	//--------------------------------------------------------------------------------------
+
+	int num = 0;
+	int frame = 0;
+	bool onRed = false;
+	bool onRedClick = false;
+
+	//--------------------------------------------------------------------------------------
+
+	// game loop
+	while (currentScene == ROUND_1)
+	{
+		// Update
+		//----------------------------------------------------------------------------------
+
+		Vector2 mousePos = GetMousePosition();
+
+		AdjustScreenWithSize();
+
+		frame += 1;
+		if (frame > 60) {
+			frame = 0;
+		}
+
+		float fontspacing = screenWidth / 175.0f;
+		float fontsize = screenWidth / 25.600000f;
+
+		//----------------------------------------------------------------------------------
+
+		// Draw
+		//----------------------------------------------------------------------------------
+		BeginDrawing();
+
+		ClearBackground(BLACK);
+
+		//Artificial Background
+		Rectangle testBG = { xScreenMargin, yScreenMargin, screenWidth, screenHeight };
+		DrawRectangleRec(testBG, BLUE);
+
+		string round1Text = "ROUND 1!!!";
+
+		DrawTextEx(font, round1Text.c_str(), { screenWidth / 3.200000f + xScreenMargin, screenHeight / 2.100000f + yScreenMargin }, screenWidth / 25.600000f, fontspacing, WHITE);
+
+
+		if (WindowShouldClose()) {
+			ClosingMaintenance();
+			CloseWindow();
+			return 0;
+		}
+
+		EndDrawing();
+		//----------------------------------------------------------------------------------
+	}
+}
+
+
 int main() {
 
 	InitWindow(initialScreenWidth, initialScreenHeight, "Conspirators"); // Initialize the window
@@ -302,7 +390,7 @@ int main() {
 
 	currentScene = MAIN_MENU; // Start with the Menu scene
 
-	SetTargetFPS(60);
+	SetTargetFPS(120);
 
 	SetExitKey(0);
 
@@ -315,6 +403,9 @@ int main() {
 				break;
 			case STARTING_ROOM:
 				StartingRoom();
+				break;
+			case ROUND_1:
+				Round1();
 				break;
 		}
 	}
