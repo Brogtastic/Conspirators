@@ -11,7 +11,8 @@ using namespace std;
 enum GameScene {
 	MAIN_MENU,
 	STARTING_ROOM,
-	ROUND_1
+	ROUND_1,
+	ROUND_2
 };
 
 GameScene currentScene;
@@ -327,21 +328,17 @@ int Round1()
 
 	int num = 0;
 	int frame = 0;
-	bool onRed = false;
-	bool onRedClick = false;
 
 	string minute = "1";
 	string seconds = "30";
 
-	//vector<string> membersVector = RefreshMembers(roomCode);
-
-	//string questionText = membersVector[4];
+	vector<string> membersVector = RefreshMembers(roomCode);
+	string questionText = membersVector[4];
 
 	float secondFrame = 15.0f;
 	float minuteFrame = 75.0f;
 	int secondInt = 30;
 
-	string questionText = "Why do dogs bark at nothing sometimes?";
 	string timeText = "1:15";
 
 	//--------------------------------------------------------------------------------------
@@ -382,6 +379,10 @@ int Round1()
 			timeText = "Time's Up!";
 		}
 
+		if ((minuteFrame < -3) || (IsKeyPressed(KEY_N))) {
+			currentScene = ROUND_2;
+		}
+
 		frame += 1;
 		if (frame > 60) {
 			frame = 0;
@@ -419,6 +420,67 @@ int Round1()
 	}
 }
 
+int Round2()
+{
+
+	// Initialization
+	//--------------------------------------------------------------------------------------
+
+	SetRound(roomCode, "round2");
+
+	int num = 0;
+	int frame = 0;
+
+	string minute = "1";
+	string seconds = "30";
+
+	//--------------------------------------------------------------------------------------
+
+	// game loop
+	while (currentScene == ROUND_2)
+	{
+		// Update
+		//----------------------------------------------------------------------------------
+
+		Vector2 mousePos = GetMousePosition();
+
+		AdjustScreenWithSize();
+
+		frame += 1;
+		if (frame > 60) {
+			frame = 0;
+		}
+
+		float fontspacing = screenWidth / 175.0f;
+		float fontsize = screenWidth / 25.600000f;
+
+		//----------------------------------------------------------------------------------
+
+		// Draw
+		//----------------------------------------------------------------------------------
+		BeginDrawing();
+
+		ClearBackground(BLACK);
+
+		//Artificial Background
+		Rectangle testBG = { xScreenMargin, yScreenMargin, screenWidth, screenHeight };
+		DrawRectangleRec(testBG, MAROON);
+
+		string round2Text = "ROUND 2!!!";
+
+		DrawTextEx(font, round2Text.c_str(), { screenWidth / 16.200000f + xScreenMargin, screenHeight / 5.00000f + yScreenMargin }, screenWidth / 15.600000f, fontspacing, WHITE);
+
+		if (WindowShouldClose()) {
+			ClosingMaintenance();
+			CloseWindow();
+			return 0;
+		}
+
+		EndDrawing();
+		//----------------------------------------------------------------------------------
+	}
+}
+
 
 int main() {
 
@@ -427,7 +489,7 @@ int main() {
 	// Set window resizable flag
 	SetWindowState(FLAG_WINDOW_RESIZABLE);
 
-	currentScene = ROUND_1; // Start with the Menu scene
+	currentScene = MAIN_MENU; // Start with the Menu scene
 
 	SetTargetFPS(60);
 
@@ -445,6 +507,9 @@ int main() {
 				break;
 			case ROUND_1:
 				Round1();
+				break;
+			case ROUND_2:
+				Round2();
 				break;
 		}
 	}

@@ -31,6 +31,11 @@ bool DoesURLExist(string extension) {
 	return res && (res->status == 200);
 }
 
+void SetRound(string roomCode, string roundSet) {
+	httplib::Client client(url.c_str());
+	auto res = client.Get((url + "/set-round?roundSet=" + roundSet + "&roomCode=" + roomCode + "&key=" + secret_key).c_str());
+}
+
 vector<string> RefreshMembers(string mainRoomCode) {
 
 	vector<string> membersReturn = { "", "", "", "", "" };
