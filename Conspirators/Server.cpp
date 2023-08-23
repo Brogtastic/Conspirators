@@ -13,7 +13,7 @@ string url = "http://127.0.0.1:8080"; //LOCAL SERVER
 //string url = "http://52.15.115.37"; //PUBLIC SERVER
 
 string GenerateRandomerString() {
-	const string allowedCharacters = "123456789ABCDEFGHIJKLMNPQRSTUVWXYZ"; // Removed the O and the 0 cause too similar looking
+	const string allowedCharacters = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"; // Removed the O and the 0  and then I and 1 cause too similar looking
 	string randomString;
 	for (int i = 0; i < 4; i++) {
 		int randomChar = rand() % 32;
@@ -33,13 +33,14 @@ bool DoesURLExist(string extension) {
 
 vector<string> RefreshMembers(string mainRoomCode) {
 
-	vector<string> membersReturn = { "", "", "", "" };
+	vector<string> membersReturn = { "", "", "", "", "" };
 
 	vector<string> membersList;
 
 	string roomCode;
 	string members;
 	string gameStage;
+	string roomQuestion;
 
 	httplib::Client client(url.c_str());
 	auto res = client.Get((url + "/" + secret_key + "/play/members-info/" + mainRoomCode + "?secret_key=" + secret_key).c_str());
@@ -50,6 +51,7 @@ vector<string> RefreshMembers(string mainRoomCode) {
 		json members = response["members"];
 		roomCode = to_string(response["roomCode"]);
 		gameStage = response["gameStage"];
+		roomQuestion = response["roomQuestion"];
 		//print(members);
 
 		string all_names;
@@ -83,6 +85,7 @@ vector<string> RefreshMembers(string mainRoomCode) {
 		}
 
 		membersReturn[3] = gameStage;
+		membersReturn[4] = roomQuestion;
 
 	}
 	else {

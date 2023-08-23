@@ -8,11 +8,6 @@
 using namespace std;
 #define print(x) cout << x
 
-//------------------------------------------------------------------------------------
-// Program main entry point
-//------------------------------------------------------------------------------------
-
-
 enum GameScene {
 	MAIN_MENU,
 	STARTING_ROOM,
@@ -27,6 +22,7 @@ int screenHeight = 720, realScreenHeight = 720, rememberScreenHeight = 720;
 int xScreenMargin, yScreenMargin = 0;
 Font font;
 vector<string> allGeneratedCodes;
+string roomCode;
 
 
 void AdjustScreenWithSize() {
@@ -80,7 +76,7 @@ void AdjustScreenWithSize() {
 }
 
 string GenerateRandomString() {
-	const string allowedCharacters = "123456789ABCDEFGHIJKLMNPQRSTUVWXYZ"; // Removed the O and the 0 cause too similar looking
+	const string allowedCharacters = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"; // Removed the O and the 0  and then I and 1 cause too similar looking
 	string randomString;
 	for (int i = 0; i < 4; i++) {
 		int randomChar = rand() % 32;
@@ -197,6 +193,8 @@ int StartingRoom()
 	generatedCode = CheckCode(generatedCode);
 
 	allGeneratedCodes.push_back(generatedCode);
+
+	roomCode = generatedCode;
 
 	LimitRoomCodes(1);
 
@@ -332,6 +330,20 @@ int Round1()
 	bool onRed = false;
 	bool onRedClick = false;
 
+	string minute = "1";
+	string seconds = "30";
+
+	//vector<string> membersVector = RefreshMembers(roomCode);
+
+	//string questionText = membersVector[4];
+
+	float secondFrame = 15.0f;
+	float minuteFrame = 75.0f;
+	int secondInt = 30;
+
+	string questionText = "Why do dogs bark at nothing sometimes?";
+	string timeText = "1:15";
+
 	//--------------------------------------------------------------------------------------
 
 	// game loop
@@ -343,6 +355,32 @@ int Round1()
 		Vector2 mousePos = GetMousePosition();
 
 		AdjustScreenWithSize();
+
+		secondFrame -= 0.017f;
+		minuteFrame -= 0.017f;
+		if (secondFrame < 0) {
+			secondFrame = 60.0f;
+		}
+		secondInt = static_cast<int>(secondFrame);
+		seconds = to_string(secondInt);
+
+		if (minuteFrame < 60.0f) {
+			minute = "0";
+		}
+		else {
+			minute = "1";
+		}
+
+		if (secondFrame > 10.0f) {
+			timeText = minute + ":" + seconds;
+		}
+		else {
+			timeText = minute + ":0" + seconds;
+		}
+
+		if (minuteFrame < 0) {
+			timeText = "Time's Up!";
+		}
 
 		frame += 1;
 		if (frame > 60) {
@@ -362,11 +400,12 @@ int Round1()
 
 		//Artificial Background
 		Rectangle testBG = { xScreenMargin, yScreenMargin, screenWidth, screenHeight };
-		DrawRectangleRec(testBG, BLUE);
+		DrawRectangleRec(testBG, MAROON);
 
 		string round1Text = "ROUND 1!!!";
 
-		DrawTextEx(font, round1Text.c_str(), { screenWidth / 3.200000f + xScreenMargin, screenHeight / 2.100000f + yScreenMargin }, screenWidth / 25.600000f, fontspacing, WHITE);
+		DrawTextEx(font, questionText.c_str(), { screenWidth / 16.200000f + xScreenMargin, screenHeight / 8.00000f + yScreenMargin }, screenWidth / 30.600000f, fontspacing, WHITE);
+		DrawTextEx(font, timeText.c_str(), { screenWidth / 2.200000f + xScreenMargin, screenHeight / 5.00000f + yScreenMargin }, screenWidth / 30.600000f, fontspacing, WHITE);
 
 
 		if (WindowShouldClose()) {
@@ -388,9 +427,9 @@ int main() {
 	// Set window resizable flag
 	SetWindowState(FLAG_WINDOW_RESIZABLE);
 
-	currentScene = MAIN_MENU; // Start with the Menu scene
+	currentScene = ROUND_1; // Start with the Menu scene
 
-	SetTargetFPS(120);
+	SetTargetFPS(60);
 
 	SetExitKey(0);
 
