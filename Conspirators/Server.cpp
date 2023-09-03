@@ -12,15 +12,17 @@ string secret_key = "agekvoslfhfgaye6382m4i201nui32h078hrauipbvluag78e4tg4w3liut
 string url = "http://127.0.0.1:8080"; //LOCAL SERVER
 //string url = "http://52.15.115.37"; //PUBLIC SERVER
 
-string GenerateRandomerString() {
-	const string allowedCharacters = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"; // Removed the O and the 0  and then I and 1 cause too similar looking
-	string randomString;
-	for (int i = 0; i < 4; i++) {
-		int randomChar = rand() % 32;
-		randomString += allowedCharacters[randomChar];
+string RequestRoomCode() {
+	httplib::Client client(url.c_str());
+	auto res = client.Get((url + "/request-new-room-code?secret_key=" + secret_key).c_str());
+	if (res && res->status == 200) {
+		json response = json::parse(res->body);
+		string round = response["gameStage"];
+		return round;
 	}
-
-	return randomString;
+	else {
+		return "server-full";
+	}
 }
 
 bool DoesURLExist(string extension) {
@@ -34,6 +36,19 @@ bool DoesURLExist(string extension) {
 void SetRound(string roomCode, string roundSet) {
 	httplib::Client client(url.c_str());
 	auto res = client.Get((url + "/set-round?roundSet=" + roundSet + "&roomCode=" + roomCode + "&key=" + secret_key).c_str());
+}
+
+string GetRound(string roomCode) {
+	httplib::Client client(url.c_str());
+	auto res = client.Get((url + "/game-stage/" + roomCode).c_str());
+	if (res && res->status == 200) {
+		json response = json::parse(res->body);
+		string round = response["gameStage"];
+		return round;
+	}
+	else {
+		return "disconnected";
+	}
 }
 
 vector<string> RefreshMembers(string mainRoomCode) {
@@ -109,32 +124,33 @@ void TransferClicks(int num) {
 	auto res = client.Get(("/profile?number=" + number).c_str());
 }
 
-string CheckCode(string generatedCode) {
+string CreateRoom() {
 
-	for (int i = 0; i < 1000; i++) {
-		httplib::Client client(url.c_str());
-		auto res = client.Get((url + "/newroom?roomcode=" + generatedCode).c_str());
+	httplib::Client client(url.c_str());
+	auto res = client.Get((url + "/newroom?secret_key=" + secret_key).c_str());
 
-		string access;
+	string access;
+	string newRoomCode;
 
-		if (res && res->status == 200) {
-			json response = json::parse(res->body);
+	if (res && res->status == 200) {
+		json response = json::parse(res->body);
 
-			access = response["access"];
+		access = response["access"];
+		newRoomCode = response["newRoomCode"];
 
-			if (access == "granted") {
-				print("\nRoom Code added to server\n");
-				return generatedCode;
-			}
-			else {
-				print("\nRoom code not added to server\n");
-				generatedCode = GenerateRandomerString();
-			}
 
+		if ((access == "granted") && (newRoomCode.length() == 4)) {
+			print("\nRoom Code added to server\n");
+			return newRoomCode;
 		}
 		else {
-			return "Check Code request failed";
+			print("\nRoom code not added to server\n");
+			return "Access Denied";
 		}
+
+	}
+	else {
+		return "Check Code request failed";
 	}
 	return "Something went wrong";
 

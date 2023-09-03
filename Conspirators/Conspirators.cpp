@@ -189,17 +189,12 @@ int StartingRoom()
 	bool onRed = false;
 	bool onRedClick = false;
 
-	string generatedCode = GenerateRandomString();
-
-	generatedCode = CheckCode(generatedCode);
-
-	allGeneratedCodes.push_back(generatedCode);
-
-	roomCode = generatedCode;
+	roomCode = CreateRoom();
+	allGeneratedCodes.push_back(roomCode);
 
 	LimitRoomCodes(1);
 
-	vector<string> membersVector = RefreshMembers(generatedCode);
+	vector<string> membersVector = RefreshMembers(roomCode);
 
 	string membersNames = membersVector[0];
 	string numberOfMembers = "0/8";
@@ -244,10 +239,10 @@ int StartingRoom()
 		DrawRectangleRounded(testRec2, 0.2f, 2, RED);
 
 		//DrawTextEx(font, string, vector2position, fontsize, fontspacing, color);
-		DrawTextEx(font, generatedCode.c_str(), { screenWidth / 3.200000f + xScreenMargin, screenHeight / 1.800000f + yScreenMargin }, fontsize, fontspacing, WHITE);
+		DrawTextEx(font, roomCode.c_str(), { screenWidth / 3.200000f + xScreenMargin, screenHeight / 1.800000f + yScreenMargin }, fontsize, fontspacing, WHITE);
 
 		if ((frame%9 == 0) && !IsKeyPressed(KEY_ENTER)) {
-			vector<string> membersVector = RefreshMembers(generatedCode);
+			vector<string> membersVector = RefreshMembers(roomCode);
 
 			membersNames = membersVector[0];
 			numberOfMembers = membersVector[1] + "/8";
@@ -291,21 +286,12 @@ int StartingRoom()
 			currentScene = MAIN_MENU;
 		}
 
-		if (CheckCollisionPointRec(mousePos, testRec2)) {
-			onRed = true;
-		}
-		else {
-			onRed = false;
-		}
-		if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) && onRed == true) {
-			onRedClick = true;
-		}
-		if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && onRed == false) {
-			onRedClick = false;
-		}
-		if (IsMouseButtonUp(MOUSE_BUTTON_LEFT) && (onRedClick == true)) {
-			currentScene = MAIN_MENU;
-		}
+		if (CheckCollisionPointRec(mousePos, testRec2)) onRed = true;
+		else onRed = false;
+		
+		if (IsMouseButtonDown(MOUSE_BUTTON_LEFT) && onRed == true) onRedClick = true;
+		if (IsMouseButtonReleased(MOUSE_BUTTON_LEFT) && onRed == false) onRedClick = false;
+		if (IsMouseButtonUp(MOUSE_BUTTON_LEFT) && (onRedClick == true)) currentScene = MAIN_MENU;
 
 
 		if (WindowShouldClose()) {
@@ -339,6 +325,8 @@ int Round1()
 	float minuteFrame = 75.0f;
 	int secondInt = 30;
 
+	string currentRound;
+
 	string timeText = "1:15";
 
 	//--------------------------------------------------------------------------------------
@@ -355,38 +343,38 @@ int Round1()
 
 		secondFrame -= 0.017f;
 		minuteFrame -= 0.017f;
-		if (secondFrame < 0) {
-			secondFrame = 60.0f;
-		}
+
+		if (secondFrame < 0) secondFrame = 60.0f;
+
 		secondInt = static_cast<int>(secondFrame);
 		seconds = to_string(secondInt);
 
-		if (minuteFrame < 60.0f) {
-			minute = "0";
-		}
-		else {
-			minute = "1";
-		}
+		// Track minute num
+		if (minuteFrame < 60.0f) minute = "0";
+		else minute = "1";
 
-		if (secondFrame > 10.0f) {
-			timeText = minute + ":" + seconds;
-		}
-		else {
-			timeText = minute + ":0" + seconds;
-		}
+		// Add zero if seconds are less than 2 digits
+		if (secondFrame > 10.0f) timeText = minute + ":" + seconds;
+		else timeText = minute + ":0" + seconds;
+		
 
-		if (minuteFrame < 0) {
-			timeText = "Time's Up!";
-		}
+		// Display text when time is up
+		if (minuteFrame < 0) timeText = "Time's Up!";
 
+		// If time runs out, round advances
 		if ((minuteFrame < -3) || (IsKeyPressed(KEY_N))) {
+			SetRound(roomCode, "round2");
 			currentScene = ROUND_2;
 		}
 
-		frame += 1;
-		if (frame > 60) {
-			frame = 0;
+		// Check twice a second if the rounds have changed
+		if (frame == 30 || frame == 60) {
+			currentRound = GetRound(roomCode);
+			if(currentRound == "round2") currentScene = ROUND_2;
 		}
+
+		frame += 1;
+		if (frame > 60) frame = 0;
 
 		float fontspacing = screenWidth / 175.0f;
 		float fontsize = screenWidth / 25.600000f;
@@ -425,8 +413,6 @@ int Round2()
 
 	// Initialization
 	//--------------------------------------------------------------------------------------
-
-	SetRound(roomCode, "round2");
 
 	int num = 0;
 	int frame = 0;
