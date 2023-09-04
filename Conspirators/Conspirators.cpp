@@ -4,11 +4,15 @@
 #include <string>
 #include <list>
 #include <vector>
+#include <thread>
+#include <future>
 #define GetIntArrayLength(x) sizeof(x) / sizeof(int)
 using namespace std;
 #define print(x) cout << x
 
 enum GameScene {
+	LOADING,
+	REFRESH,
 	MAIN_MENU,
 	STARTING_ROOM,
 	ROUND_1,
@@ -21,6 +25,7 @@ const int initialScreenHeight = 720;
 int screenWidth = 1280, realScreenWidth = 1280, rememberScreenWidth = 1280;
 int screenHeight = 720, realScreenHeight = 720, rememberScreenHeight = 720;
 int xScreenMargin, yScreenMargin = 0;
+bool serverOnline;
 Font font;
 vector<string> allGeneratedCodes;
 string roomCode;
@@ -110,22 +115,113 @@ void ClosingMaintenance() {
 	LimitRoomCodes(0);
 }
 
+int Loading() {
+
+	int frame = 0;
+	float loadingBarWidth = 0.0f;
+
+	future<bool> result = async(launch::async, DoesURLExist);
+
+	while (currentScene == LOADING) {
+
+		AdjustScreenWithSize();
+
+		frame += 1;
+		if(loadingBarWidth < 1.0f) loadingBarWidth += 0.01f;
+		else loadingBarWidth = 1.0f;
+		
+		BeginDrawing();
+		ClearBackground(BLACK);
+
+		//posx, posy, sizex, sizey
+		Rectangle testBG = { xScreenMargin, yScreenMargin, screenWidth, screenHeight };
+		DrawRectangleRec(testBG, DARKGREEN);
+
+		//Rectangle loadingRect = { 450, 350, 400, 50 };
+		Rectangle loadingRect1 = { screenWidth / 2.844445f + xScreenMargin, screenHeight / 2.057143f + yScreenMargin, (screenWidth / 3.2000f)*loadingBarWidth, screenHeight / 14.400000 };
+		DrawRectangleRec(loadingRect1, WHITE);
+		Rectangle loadingRect = { screenWidth / 2.844445f + xScreenMargin, screenHeight / 2.057143f + yScreenMargin, screenWidth / 3.2000f, screenHeight / 14.400000 };
+		DrawRectangleLinesEx(loadingRect, screenWidth/300.0f, ORANGE);
+		
+
+		string percentText = to_string(static_cast<int>(loadingBarWidth * 100)) + "%";
+		DrawText(percentText.c_str(), screenWidth / 2.100000f + xScreenMargin, screenHeight / 1.750000f + yScreenMargin, screenWidth / 25.600000f, WHITE);
+		EndDrawing();
+
+		if (loadingBarWidth == 0.25) {
+			if (!DoesURLExist()) {
+				serverOnline = false;
+			}
+			else {
+				serverOnline = true;
+				roomCode = CreateRoom();
+				allGeneratedCodes.push_back(roomCode);
+				LimitRoomCodes(1);
+			}
+		}
+
+		if (IsKeyPressed(KEY_T)) {
+			float myRectPosX = screenWidth / 450.0f;
+			float myRectPosY = screenHeight / 350.0f;
+			float myRectWidth = screenWidth / 400.0f;
+			float myRectHeight = screenHeight / 50.0f;
+
+			print("Rectangle loadingRect = { screenWidth / " + to_string(myRectPosX) + "f + xScreenMargin, screenHeight / " + to_string(myRectPosY) + "f + yScreenMargin, screenWidth / " + to_string(myRectWidth) + "f, screenHeight / " + to_string(myRectHeight) + ", WHITE);");
+		}
+
+		if (loadingBarWidth == 1.0f) {
+			currentScene = MAIN_MENU;
+		}
+
+		if (WindowShouldClose()) {
+			ClosingMaintenance();
+			CloseWindow();
+			return 0;
+		}
+
+	}
+	serverOnline = result.get();
+	currentScene = MAIN_MENU;
+	return 0;
+}
+
+int Refresh() {
+	currentScene = MAIN_MENU;
+	return 0;
+}
+
 int MainMenu()
 {
-	LimitRoomCodes(0);
-
+	int frame = 0;
 	string statusOfServer = "";
-	bool serverOnline;
+
+	future<bool> result = async(launch::async, DoesURLExist);
+	while (1) {
+		frame += 1;
+		BeginDrawing();
+		ClearBackground(BLACK);
+		Rectangle testBG = { xScreenMargin, yScreenMargin, screenWidth, screenHeight };
+		DrawRectangleRec(testBG, ORANGE);
+		DrawText("MENU", screenWidth / 3.200000f + xScreenMargin, screenHeight / 1.800000f + yScreenMargin, screenWidth / 25.600000f, WHITE);
+		DrawText(statusOfServer.c_str(), screenWidth / 7.200000f + xScreenMargin, screenHeight / 1.1000f + yScreenMargin, screenWidth / 60.600000f, WHITE);
+		EndDrawing();
+		if (frame % 15 == 0) {
+			if(statusOfServer.length()>6 && statusOfServer.length() < 10) statusOfServer = statusOfServer += ".";
+			else statusOfServer = "waiting";
+		}
+		if (result.wait_for(chrono::milliseconds(0)) == future_status::ready) {
+			serverOnline = result.get();
+			break; // Exit the loop when the result is ready
+		}
+	}
+
+	if (serverOnline){
+		roomCode = CreateRoom();
+		allGeneratedCodes.push_back(roomCode);
+		LimitRoomCodes(1);
+	}
 
 	int urlCheckInterval = 0;
-
-	if (!DoesURLExist("")) {
-		statusOfServer = "Servers are down. Cannot create room.";
-		serverOnline = false;
-	}
-	else {
-		serverOnline = true;
-	}
 
 	while (currentScene == MAIN_MENU)
 	{
@@ -135,15 +231,11 @@ int MainMenu()
 		AdjustScreenWithSize();
 		
 		if (IsKeyPressed(KEY_R)) {
-			serverOnline = DoesURLExist("");
+			currentScene = REFRESH;
 		}
 
-		if (!serverOnline) {
-			statusOfServer = "Servers are down. Cannot create room. Press 'R' to refresh.";
-		}
-		else {
-			statusOfServer = "";
-		}
+		if (!serverOnline) statusOfServer = "Servers are down. Cannot create room. Press 'R' to refresh.";
+		else statusOfServer = "";
 
 		//----------------------------------------------------------------------------------
 
@@ -188,11 +280,6 @@ int StartingRoom()
 	int frame = 0;
 	bool onRed = false;
 	bool onRedClick = false;
-
-	roomCode = CreateRoom();
-	allGeneratedCodes.push_back(roomCode);
-
-	LimitRoomCodes(1);
 
 	vector<string> membersVector = RefreshMembers(roomCode);
 
@@ -485,6 +572,12 @@ int main() {
 
 	while (!WindowShouldClose()) {
 		switch (currentScene) {
+			case LOADING:
+				Loading();
+				break;
+			case REFRESH:
+				Refresh();
+				break;
 			case MAIN_MENU:
 				MainMenu();
 				break;

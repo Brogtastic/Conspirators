@@ -25,10 +25,10 @@ string RequestRoomCode() {
 	}
 }
 
-bool DoesURLExist(string extension) {
+bool DoesURLExist() {
 	httplib::Client client(url.c_str());
 
-	auto res = client.Head("/" + extension);
+	auto res = client.Head("/");
 
 	return res && (res->status == 200);
 }
@@ -36,6 +36,11 @@ bool DoesURLExist(string extension) {
 void SetRound(string roomCode, string roundSet) {
 	httplib::Client client(url.c_str());
 	auto res = client.Get((url + "/set-round?roundSet=" + roundSet + "&roomCode=" + roomCode + "&key=" + secret_key).c_str());
+}
+
+void RefreshLines() {
+	httplib::Client client(url.c_str());
+	auto res = client.Get((url + "/refresh-lines?key=" + secret_key).c_str());
 }
 
 string GetRound(string roomCode) {
