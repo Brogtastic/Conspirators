@@ -16,7 +16,8 @@ enum GameScene {
 	MAIN_MENU,
 	STARTING_ROOM,
 	ROUND_1,
-	ROUND_2
+	ROUND_2,
+	ROUND_3
 };
 
 GameScene currentScene;
@@ -207,11 +208,11 @@ int MainMenu()
 		EndDrawing();
 		if (frame % 15 == 0) {
 			if(statusOfServer.length()>6 && statusOfServer.length() < 10) statusOfServer = statusOfServer += ".";
-			else statusOfServer = "waiting";
+			else statusOfServer = "connecting";
 		}
 		if (result.wait_for(chrono::milliseconds(0)) == future_status::ready) {
 			serverOnline = result.get();
-			break; // Exit the loop when the result is ready
+			break; 
 		}
 	}
 
@@ -345,12 +346,6 @@ int StartingRoom()
 		DrawTextEx(font, firstMember.c_str(), { screenWidth / 4.200000f + xScreenMargin, screenHeight / 1.100000f + yScreenMargin }, screenWidth / 25.600000f, fontspacing, WHITE);
 		DrawTextEx(font, numberOfMembers.c_str(), { screenWidth / 100.200000f + xScreenMargin, screenHeight / 100.100000f + yScreenMargin }, screenWidth / 25.600000f, fontspacing, WHITE);
 		//DrawText(access.c_str(), screenWidth / 12.800000f + xScreenMargin, screenHeight / 7.200000f + yScreenMargin, screenWidth / 25.600000f, WHITE);
-
-
-		if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-			num += 1;
-			TransferClicks(num);
-		}
 
 		if (IsKeyPressed(KEY_R)) {
 			float myPosX = screenWidth / testRec2.x;
@@ -507,10 +502,109 @@ int Round2()
 	string minute = "1";
 	string seconds = "30";
 
+	float secondFrame = 15.0f;
+	float minuteFrame = 75.0f;
+	int secondInt = 30;
+
+	string currentRound;
+
+	string timeText = "1:15";
+
+	string promptText = "Write some words to mess with their theory!";
+
 	//--------------------------------------------------------------------------------------
 
 	// game loop
 	while (currentScene == ROUND_2)
+	{
+		// Update
+		//----------------------------------------------------------------------------------
+
+		Vector2 mousePos = GetMousePosition();
+
+		AdjustScreenWithSize();
+
+		secondFrame -= 0.017f;
+		minuteFrame -= 0.017f;
+
+		if (secondFrame < 0) secondFrame = 60.0f;
+
+		secondInt = static_cast<int>(secondFrame);
+		seconds = to_string(secondInt);
+
+		// Track minute num
+		if (minuteFrame < 60.0f) minute = "0";
+		else minute = "1";
+
+		// Add zero if seconds are less than 2 digits
+		if (secondFrame > 10.0f) timeText = minute + ":" + seconds;
+		else timeText = minute + ":0" + seconds;
+
+
+		// Display text when time is up
+		if (minuteFrame < 0) timeText = "Time's Up!";
+
+		// If time runs out, round advances
+		if ((minuteFrame < -3) || (IsKeyPressed(KEY_N))) {
+			SetRound(roomCode, "round3");
+			currentScene = ROUND_3;
+		}
+
+		// Check twice a second if the rounds have changed
+		if (frame == 30 || frame == 60) {
+			currentRound = GetRound(roomCode);
+			if (currentRound == "round3") currentScene = ROUND_3;
+		}
+
+		frame += 1;
+		if (frame > 60) frame = 0;
+
+		float fontspacing = screenWidth / 175.0f;
+		float fontsize = screenWidth / 25.600000f;
+
+		//----------------------------------------------------------------------------------
+
+		// Draw
+		//----------------------------------------------------------------------------------
+		BeginDrawing();
+
+		ClearBackground(BLACK);
+
+		//Artificial Background
+		Rectangle testBG = { xScreenMargin, yScreenMargin, screenWidth, screenHeight };
+		DrawRectangleRec(testBG, MAROON);
+
+		string round2Text = "ROUND 2!!!";
+
+		DrawTextEx(font, round2Text.c_str(), { screenWidth / 16.200000f + xScreenMargin, screenHeight / 8.00000f + yScreenMargin }, screenWidth / 30.600000f, fontspacing, WHITE);
+		DrawTextEx(font, promptText.c_str(), { screenWidth / 16.200000f + xScreenMargin, screenHeight / 5.00000f + yScreenMargin }, screenWidth / 30.600000f, fontspacing, WHITE);
+		DrawTextEx(font, timeText.c_str(), { screenWidth / 16.200000f + xScreenMargin, screenHeight / 3.00000f + yScreenMargin }, screenWidth / 15.600000f, fontspacing, WHITE);
+
+		if (WindowShouldClose()) {
+			ClosingMaintenance();
+			CloseWindow();
+			return 0;
+		}
+
+		EndDrawing();
+		//----------------------------------------------------------------------------------
+	}
+}
+
+int Round3() {
+	// Initialization
+	//--------------------------------------------------------------------------------------
+
+	int num = 0;
+	int frame = 0;
+
+	string minute = "1";
+	string seconds = "30";
+
+	//--------------------------------------------------------------------------------------
+
+	// game loop
+	while (currentScene == ROUND_3)
 	{
 		// Update
 		//----------------------------------------------------------------------------------
@@ -537,9 +631,9 @@ int Round2()
 
 		//Artificial Background
 		Rectangle testBG = { xScreenMargin, yScreenMargin, screenWidth, screenHeight };
-		DrawRectangleRec(testBG, MAROON);
+		DrawRectangleRec(testBG, RED);
 
-		string round2Text = "ROUND 2!!!";
+		string round2Text = "ROUND 3!!!";
 
 		DrawTextEx(font, round2Text.c_str(), { screenWidth / 16.200000f + xScreenMargin, screenHeight / 5.00000f + yScreenMargin }, screenWidth / 15.600000f, fontspacing, WHITE);
 
@@ -589,6 +683,9 @@ int main() {
 				break;
 			case ROUND_2:
 				Round2();
+				break;
+			case ROUND_3:
+				Round3();
 				break;
 		}
 	}

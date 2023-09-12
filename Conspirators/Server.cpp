@@ -121,14 +121,6 @@ vector<string> RefreshMembers(string mainRoomCode) {
 
 }
 
-void TransferClicks(int num) {
-
-	string number = to_string(num); 
-
-	httplib::Client client(url.c_str());
-	auto res = client.Get(("/profile?number=" + number).c_str());
-}
-
 string CreateRoom() {
 
 	httplib::Client client(url.c_str());
