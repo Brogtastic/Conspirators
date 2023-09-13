@@ -1,4 +1,4 @@
-#include "raylib.h"
+#include <raylib/raylib.h>
 #include "MiddleMan.h"
 #include <iostream>
 #include <string>
@@ -114,6 +114,7 @@ void ToggleFullScreenWindow(int windowWidth, int windowHeight) {
 void ClosingMaintenance() {
 	UnloadFont(font);
 	LimitRoomCodes(0);
+	CleanCurl();
 }
 
 int Loading() {
@@ -207,7 +208,7 @@ int MainMenu()
 		DrawText(statusOfServer.c_str(), screenWidth / 7.200000f + xScreenMargin, screenHeight / 1.1000f + yScreenMargin, screenWidth / 60.600000f, WHITE);
 		EndDrawing();
 		if (frame % 15 == 0) {
-			if(statusOfServer.length()>6 && statusOfServer.length() < 10) statusOfServer = statusOfServer += ".";
+			if(statusOfServer.length()>=10 && statusOfServer.length() < 14) statusOfServer = statusOfServer += ".";
 			else statusOfServer = "connecting";
 		}
 		if (result.wait_for(chrono::milliseconds(0)) == future_status::ready) {
@@ -663,6 +664,8 @@ int main() {
 	SetExitKey(0);
 
 	font = LoadFont("resources/fonts/romulus.png");
+
+	thread sseThread(PerformSSE);
 
 	while (!WindowShouldClose()) {
 		switch (currentScene) {

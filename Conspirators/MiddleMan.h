@@ -1,6 +1,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <thread>
 using namespace std;
 
 string CreateRoom();
@@ -9,5 +10,5 @@ vector<string> RefreshMembers(string mainRoomCode);
 bool DoesURLExist();
 void SetRound(string roomCode, string roundSet);
 string GetRound(string roomCode);
-string RequestRoomCode();
-void RefreshLines();
+void PerformSSE();
+void CleanCurl();
