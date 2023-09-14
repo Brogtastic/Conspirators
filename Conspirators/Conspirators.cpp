@@ -4,8 +4,8 @@ string roomQuestion = "None";
 string gameStage = "None";
 int numMembers = 0;
 vector<string> membersList = { "", "" };
-string membersNames = "None";
-string firstMember = "None";
+string membersNames = "No members in room";
+string firstMember = "Need at least 3 players to start the game...";
 bool threadActive = false;
 
 #include <raylib/raylib.h>
@@ -230,7 +230,6 @@ int MainMenu()
 	}
 
 	if (serverOnline){
-		if(roomCode != "None") TerminateRoomThread();
 		CreateRoom();
 		allGeneratedCodes.push_back(roomCode);
 		LimitRoomCodes(1);
@@ -415,8 +414,6 @@ int Round1()
 	float minuteFrame = 75.0f;
 	int secondInt = 30;
 
-	string currentRound;
-
 	string timeText = "1:15";
 
 	//--------------------------------------------------------------------------------------
@@ -454,11 +451,13 @@ int Round1()
 		// If time runs out, round advances
 		if ((minuteFrame < -3) || (IsKeyPressed(KEY_N))) {
 			SetRound("round2");
+			gameStage = "round2";
 			currentScene = ROUND_2;
 		}
 
 		// Check twice a second if the rounds have changed
-		if (currentRound == "round2") {
+		if (gameStage == "round2") {
+			print("\ntime for round 2");
 			currentScene = ROUND_2;
 		}
 
@@ -513,8 +512,6 @@ int Round2()
 	float minuteFrame = 75.0f;
 	int secondInt = 30;
 
-	string currentRound;
-
 	string timeText = "1:15";
 
 	string promptText = "Write some words to mess with their theory!";
@@ -553,14 +550,13 @@ int Round2()
 
 		// If time runs out, round advances
 		if ((minuteFrame < -3) || (IsKeyPressed(KEY_N))) {
-			sseThread.join();
 			SetRound("round3");
+			gameStage = "round3";
 			currentScene = ROUND_3;
 		}
 
 		// Check twice a second if the rounds have changed
-		if (currentRound == "round3") {
-			sseThread.join();
+		if (gameStage == "round3") {
 			currentScene = ROUND_3;
 		}
 
@@ -580,7 +576,7 @@ int Round2()
 
 		//Artificial Background
 		Rectangle testBG = { xScreenMargin, yScreenMargin, screenWidth, screenHeight };
-		DrawRectangleRec(testBG, MAROON);
+		DrawRectangleRec(testBG, GREEN);
 
 		string round2Text = "ROUND 2!!!";
 
@@ -640,9 +636,9 @@ int Round3() {
 		Rectangle testBG = { xScreenMargin, yScreenMargin, screenWidth, screenHeight };
 		DrawRectangleRec(testBG, RED);
 
-		string round2Text = "ROUND 3!!!";
+		string round3Text = "ROUND 3!!!";
 
-		DrawTextEx(font, round2Text.c_str(), { screenWidth / 16.200000f + xScreenMargin, screenHeight / 5.00000f + yScreenMargin }, screenWidth / 15.600000f, fontspacing, WHITE);
+		DrawTextEx(font, round3Text.c_str(), { screenWidth / 16.200000f + xScreenMargin, screenHeight / 5.00000f + yScreenMargin }, screenWidth / 15.600000f, fontspacing, WHITE);
 
 		if (WindowShouldClose()) {
 			ClosingMaintenance();

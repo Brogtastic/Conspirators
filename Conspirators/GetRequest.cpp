@@ -1,5 +1,6 @@
 #include <iostream>
 #include "MyGlobals.h"
+#include "MiddleMan.h"
 #include <cpp_httplib/httplib.h>
 #include <thread>
 #include <curl/curl.h>
@@ -21,31 +22,23 @@ string sseData;
 CURL* curl;
 
 size_t WriteCallback(void* contents, size_t size, size_t nmemb, string* output) {
-	print("\n\nWrite Call back called\n\n");
 	string received_data(static_cast<char*>(contents), size * nmemb);
 	cout << "\n\nReceived data: " << received_data << endl;
 
 	try {
 		json response = json::parse(received_data);
 
-		json members = response["members"];
+		json data = response["data"];
+		print("Data: " + to_string(data));
 
-		membersList = {};
-		string all_names;
-		if (members.size() > 0) {
-			for (const auto& member : members) {
-				string name = member["name"];
-				all_names += name + ", ";
-				membersList.push_back(name);
-			}
-			// Remove the trailing comma and space
-			if (!all_names.empty()) {
-				all_names = all_names.substr(0, all_names.size() - 2);
-			}
-			membersNames = "MEMBERS: " + all_names;
-			firstMember = membersList[0];
+		if (data == "UpdateMembers") {
+			print("\nCalling UpdateMembers");
+			UpdateMembers();
 		}
-		gameStage = response["gameStage"];
+		else if (data == "UpdateGameStage") {
+			print("\nCalling UpdateGameStage");
+			UpdateGameStage();
+		}
 
 	}
 	catch (const json::exception& e) {

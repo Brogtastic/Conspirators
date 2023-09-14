@@ -9,4 +9,5 @@ void DeleteCodeOffServer(string deleteCode);
 bool DoesURLExist();
 void SetRound(string roundSet);
 void PerformSSE();
-void TerminateRoomThread();
+void UpdateMembers();
+void UpdateGameStage();

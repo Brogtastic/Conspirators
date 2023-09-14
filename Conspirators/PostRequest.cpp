@@ -55,28 +55,12 @@ void CreateRoom() {
 
 }
 
-void TerminateRoomThread() {
-	httplib::Client client(url.c_str());
-	auto res = client.Get((url + "/terminate-room-thread/" + roomCode + "?secret_key=" + secret_key).c_str());
-
-	if (res && res->status == 200) {
-		json response = json::parse(res->body);
-
-		string access = response["access"];
-
-		if (access == "granted") {
-			print("\nRoom thread terminated.");
-		}
-		else {
-			print("\nRoomThread access not granted.");
-		}
-	}
-	else {
-		print("\nRoomThread function did not connect.");
-	}
-}
-
 void DeleteCodeOffServer(string deleteCode) {
+
+	numMembers = 0;
+	membersList = {};
+	membersNames = "No members in room";
+	firstMember = "Need at least 3 players to start the game...";
 
 	httplib::Client client(url.c_str());
 	auto res = client.Get((url + "/deleteroom?roomcode=" + deleteCode).c_str());
@@ -99,3 +83,83 @@ void DeleteCodeOffServer(string deleteCode) {
 	}
 }
 
+
+void UpdateMembers() {
+	httplib::Client client(url.c_str());
+	auto res = client.Get((url + "/members-names-return/" + roomCode + "?secret_key=" + secret_key).c_str());
+
+	if (res && res->status == 200) {
+		json response = json::parse(res->body);
+
+		string access = response["access"];
+
+		if (access == "denied") {
+			print("UpdateMembers access denied");
+		}
+		else {
+			json allNames = response["allNames"];
+			string names = "";
+			if (allNames.is_array()) {
+				// Create a vector of strings to store the names
+				std::vector<string> namesVector;
+
+				string allNamesStr = "";
+				for (const auto& name : allNames) {
+					string nameStr = name;
+					namesVector.push_back(nameStr);
+					allNamesStr += nameStr + ", ";
+				}
+
+				membersNames = "MEMBERS: " + allNamesStr.substr(0, allNamesStr.size() - 2);
+
+				numMembers = namesVector.size();
+
+				if (namesVector.size() == 0) {
+					firstMember = "Need at least 3 players to start the game...";
+				}
+				else if (namesVector.size() == 1) {
+					firstMember = "Need two more players to start the game";
+				}
+				else if (namesVector.size() == 2) {
+					firstMember = "Need one more player to start the game";
+				}
+				else if (namesVector.size() > 2) {
+					firstMember = "Waiting for " + namesVector[0] + " to start the game...";
+				}
+
+			}
+			else {
+				print("\nUpdateMembers: allNames is not an array");
+			}
+		}
+
+	}
+	else {
+		print("\nUpdate Members request failed");
+	}
+}
+
+
+void UpdateGameStage() {
+	print("\nUpdateGamestage called");
+	httplib::Client client(url.c_str());
+	auto res = client.Get((url + "/game-stage-return/" + roomCode + "?secret_key=" + secret_key).c_str());
+
+	if (res && res->status == 200) {
+		json response = json::parse(res->body);
+
+		string access = response["access"];
+
+		if (access == "denied") {
+			print("UpdateGameStage access denied");
+		}
+		else {
+			gameStage = response["gameStage"];
+			print("\nNew gameStage: " + gameStage);
+		}
+
+	}
+	else {
+		print("\nUpdate Members request failed");
+	}
+}
