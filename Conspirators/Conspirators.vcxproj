@@ -164,6 +164,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MiddleMan.h" />
+    <ClInclude Include="MyGlobals.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

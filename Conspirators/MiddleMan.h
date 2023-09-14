@@ -4,11 +4,9 @@
 #include <thread>
 using namespace std;
 
-string CreateRoom();
+void CreateRoom();
 void DeleteCodeOffServer(string deleteCode);
-vector<string> RefreshMembers(string mainRoomCode);
 bool DoesURLExist();
-void SetRound(string roomCode, string roundSet);
-string GetRound(string roomCode);
+void SetRound(string roundSet);
 void PerformSSE();
-void CleanCurl();
+void TerminateRoomThread();

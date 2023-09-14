@@ -1,3 +1,13 @@
+#include "MyGlobals.h"
+string roomCode = "None";
+string roomQuestion = "None";
+string gameStage = "None";
+int numMembers = 0;
+vector<string> membersList = { "", "" };
+string membersNames = "None";
+string firstMember = "None";
+bool threadActive = false;
+
 #include <raylib/raylib.h>
 #include "MiddleMan.h"
 #include <iostream>
@@ -29,7 +39,7 @@ int xScreenMargin, yScreenMargin = 0;
 bool serverOnline;
 Font font;
 vector<string> allGeneratedCodes;
-string roomCode;
+thread sseThread;
 
 
 void AdjustScreenWithSize() {
@@ -114,7 +124,8 @@ void ToggleFullScreenWindow(int windowWidth, int windowHeight) {
 void ClosingMaintenance() {
 	UnloadFont(font);
 	LimitRoomCodes(0);
-	CleanCurl();
+	sseThread.join();
+	CloseWindow();
 }
 
 int Loading() {
@@ -156,7 +167,7 @@ int Loading() {
 			}
 			else {
 				serverOnline = true;
-				roomCode = CreateRoom();
+				CreateRoom();
 				allGeneratedCodes.push_back(roomCode);
 				LimitRoomCodes(1);
 			}
@@ -194,6 +205,7 @@ int Refresh() {
 
 int MainMenu()
 {
+	threadActive = false;
 	int frame = 0;
 	string statusOfServer = "";
 
@@ -218,10 +230,19 @@ int MainMenu()
 	}
 
 	if (serverOnline){
-		roomCode = CreateRoom();
+		if(roomCode != "None") TerminateRoomThread();
+		CreateRoom();
 		allGeneratedCodes.push_back(roomCode);
 		LimitRoomCodes(1);
 	}
+
+	if (sseThread.joinable()) {
+		print("\nThread joinable!");
+		sseThread.join();
+		print("\nThread joined!");
+	}
+	threadActive = true;
+	sseThread = thread(PerformSSE);
 
 	int urlCheckInterval = 0;
 
@@ -260,7 +281,6 @@ int MainMenu()
 
 		if (WindowShouldClose()) {
 			ClosingMaintenance();
-			CloseWindow();
 			return 0;
 		}
 
@@ -283,11 +303,8 @@ int StartingRoom()
 	bool onRed = false;
 	bool onRedClick = false;
 
-	vector<string> membersVector = RefreshMembers(roomCode);
 
-	string membersNames = membersVector[0];
 	string numberOfMembers = "0/8";
-	string firstMember = membersVector[2];
 	
 	//--------------------------------------------------------------------------------------
 
@@ -330,18 +347,12 @@ int StartingRoom()
 		//DrawTextEx(font, string, vector2position, fontsize, fontspacing, color);
 		DrawTextEx(font, roomCode.c_str(), { screenWidth / 3.200000f + xScreenMargin, screenHeight / 1.800000f + yScreenMargin }, fontsize, fontspacing, WHITE);
 
-		if ((frame%9 == 0) && !IsKeyPressed(KEY_ENTER)) {
-			vector<string> membersVector = RefreshMembers(roomCode);
 
-			membersNames = membersVector[0];
-			numberOfMembers = membersVector[1] + "/8";
-			firstMember = membersVector[2];
-
-			if (membersVector[3] == "round1") {
-				currentScene = ROUND_1;
-			}
+		if (gameStage == "round1") {
+			currentScene = ROUND_1;
 		}
 
+		numberOfMembers = to_string(numMembers) + "/8";
 
 		DrawTextEx(font, membersNames.c_str(), { screenWidth / 3.200000f + xScreenMargin, screenHeight / 2.100000f + yScreenMargin }, screenWidth / 25.600000f, fontspacing, WHITE);
 		DrawTextEx(font, firstMember.c_str(), { screenWidth / 4.200000f + xScreenMargin, screenHeight / 1.100000f + yScreenMargin }, screenWidth / 25.600000f, fontspacing, WHITE);
@@ -379,7 +390,6 @@ int StartingRoom()
 
 		if (WindowShouldClose()) {
 			ClosingMaintenance();
-			CloseWindow();
 			return 0;
 		}
 
@@ -400,9 +410,6 @@ int Round1()
 
 	string minute = "1";
 	string seconds = "30";
-
-	vector<string> membersVector = RefreshMembers(roomCode);
-	string questionText = membersVector[4];
 
 	float secondFrame = 15.0f;
 	float minuteFrame = 75.0f;
@@ -446,14 +453,13 @@ int Round1()
 
 		// If time runs out, round advances
 		if ((minuteFrame < -3) || (IsKeyPressed(KEY_N))) {
-			SetRound(roomCode, "round2");
+			SetRound("round2");
 			currentScene = ROUND_2;
 		}
 
 		// Check twice a second if the rounds have changed
-		if (frame == 30 || frame == 60) {
-			currentRound = GetRound(roomCode);
-			if(currentRound == "round2") currentScene = ROUND_2;
+		if (currentRound == "round2") {
+			currentScene = ROUND_2;
 		}
 
 		frame += 1;
@@ -476,19 +482,19 @@ int Round1()
 
 		string round1Text = "ROUND 1!!!";
 
-		DrawTextEx(font, questionText.c_str(), { screenWidth / 16.200000f + xScreenMargin, screenHeight / 8.00000f + yScreenMargin }, screenWidth / 30.600000f, fontspacing, WHITE);
+		DrawTextEx(font, roomQuestion.c_str(), { screenWidth / 16.200000f + xScreenMargin, screenHeight / 8.00000f + yScreenMargin }, screenWidth / 30.600000f, fontspacing, WHITE);
 		DrawTextEx(font, timeText.c_str(), { screenWidth / 2.200000f + xScreenMargin, screenHeight / 5.00000f + yScreenMargin }, screenWidth / 30.600000f, fontspacing, WHITE);
 
 
 		if (WindowShouldClose()) {
 			ClosingMaintenance();
-			CloseWindow();
 			return 0;
 		}
 
 		EndDrawing();
 		//----------------------------------------------------------------------------------
 	}
+	return 0;
 }
 
 int Round2()
@@ -547,14 +553,15 @@ int Round2()
 
 		// If time runs out, round advances
 		if ((minuteFrame < -3) || (IsKeyPressed(KEY_N))) {
-			SetRound(roomCode, "round3");
+			sseThread.join();
+			SetRound("round3");
 			currentScene = ROUND_3;
 		}
 
 		// Check twice a second if the rounds have changed
-		if (frame == 30 || frame == 60) {
-			currentRound = GetRound(roomCode);
-			if (currentRound == "round3") currentScene = ROUND_3;
+		if (currentRound == "round3") {
+			sseThread.join();
+			currentScene = ROUND_3;
 		}
 
 		frame += 1;
@@ -583,7 +590,6 @@ int Round2()
 
 		if (WindowShouldClose()) {
 			ClosingMaintenance();
-			CloseWindow();
 			return 0;
 		}
 
@@ -640,7 +646,6 @@ int Round3() {
 
 		if (WindowShouldClose()) {
 			ClosingMaintenance();
-			CloseWindow();
 			return 0;
 		}
 
@@ -664,8 +669,6 @@ int main() {
 	SetExitKey(0);
 
 	font = LoadFont("resources/fonts/romulus.png");
-
-	thread sseThread(PerformSSE);
 
 	while (!WindowShouldClose()) {
 		switch (currentScene) {
@@ -694,7 +697,6 @@ int main() {
 	}
 
 	ClosingMaintenance();
-	CloseWindow();
 	return 0;
 }
 

@@ -29,6 +29,9 @@
     <ClInclude Include="MiddleMan.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="MyGlobals.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />

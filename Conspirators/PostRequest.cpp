@@ -1,4 +1,5 @@
 #include <iostream>
+#include "MyGlobals.h"
 #include <cpp_httplib/httplib.h>
 #include <nlohmann/json.hpp>
 #include <string>
@@ -20,15 +21,15 @@ bool DoesURLExist() {
 	return res && (res->status == 200);
 }
 
-void SetRound(string roomCode, string roundSet) {
+void SetRound(string roundSet) {
 	httplib::Client client(url.c_str());
 	auto res = client.Get((url + "/set-round?roundSet=" + roundSet + "&roomCode=" + roomCode + "&key=" + secret_key).c_str());
 }
 
-string CreateRoom() {
+void CreateRoom() {
 
 	httplib::Client client(url.c_str());
-	auto res = client.Get((url + "/newroom?secret_key=" + secret_key).c_str());
+	auto res = client.Get((url + "/createroom?secret_key=" + secret_key).c_str());
 
 	string access;
 	string newRoomCode;
@@ -39,22 +40,40 @@ string CreateRoom() {
 		access = response["access"];
 		newRoomCode = response["newRoomCode"];
 
-
 		if ((access == "granted") && (newRoomCode.length() == 4)) {
-			print("\nRoom Code added to server\n");
-			return newRoomCode;
+			roomCode = newRoomCode;
+			roomQuestion = response["roomQuestion"];
+			print("\nRoom created!");
 		}
 		else {
-			print("\nRoom code not added to server\n");
-			return "Access Denied";
+			print("\nAccess not granted. No room created.");
 		}
-
 	}
 	else {
-		return "Check Code request failed";
+		print("\nCreateRoom function did not connect.");
 	}
-	return "Something went wrong";
 
+}
+
+void TerminateRoomThread() {
+	httplib::Client client(url.c_str());
+	auto res = client.Get((url + "/terminate-room-thread/" + roomCode + "?secret_key=" + secret_key).c_str());
+
+	if (res && res->status == 200) {
+		json response = json::parse(res->body);
+
+		string access = response["access"];
+
+		if (access == "granted") {
+			print("\nRoom thread terminated.");
+		}
+		else {
+			print("\nRoomThread access not granted.");
+		}
+	}
+	else {
+		print("\nRoomThread function did not connect.");
+	}
 }
 
 void DeleteCodeOffServer(string deleteCode) {
@@ -76,7 +95,7 @@ void DeleteCodeOffServer(string deleteCode) {
 
 	}
 	else {
-		print("request failed");
+		print("\nrequest failed, room code not deleted");
 	}
 }
 
