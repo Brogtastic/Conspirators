@@ -29,7 +29,6 @@ size_t WriteCallback(void* contents, size_t size, size_t nmemb, string* output) 
 		json response = json::parse(received_data);
 
 		json data = response["data"];
-		print("Data: " + to_string(data));
 
 		if (data == "UpdateMembers") {
 			print("\nCalling UpdateMembers");
@@ -38,6 +37,13 @@ size_t WriteCallback(void* contents, size_t size, size_t nmemb, string* output) 
 		else if (data == "UpdateGameStage") {
 			print("\nCalling UpdateGameStage");
 			UpdateGameStage();
+		}
+		else if (data == "SSE Connected") {
+			print("\nSSE Connected");
+		}
+		else {
+			print("\nSSE data not recognized... ");
+			print("\nData: " + to_string(data));
 		}
 
 	}

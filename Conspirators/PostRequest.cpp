@@ -22,6 +22,7 @@ bool DoesURLExist() {
 }
 
 void SetRound(string roundSet) {
+	print("\nSet round called... set round to " + roundSet + "\n");
 	httplib::Client client(url.c_str());
 	auto res = client.Get((url + "/set-round?roundSet=" + roundSet + "&roomCode=" + roomCode + "&key=" + secret_key).c_str());
 }

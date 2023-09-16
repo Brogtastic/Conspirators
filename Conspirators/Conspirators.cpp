@@ -498,9 +498,9 @@ int Round1()
 
 int Round2()
 {
-
 	// Initialization
 	//--------------------------------------------------------------------------------------
+	SetRound("round2");
 
 	int num = 0;
 	int frame = 0;
@@ -597,6 +597,8 @@ int Round2()
 int Round3() {
 	// Initialization
 	//--------------------------------------------------------------------------------------
+	SetRound("round3");
+
 
 	int num = 0;
 	int frame = 0;
