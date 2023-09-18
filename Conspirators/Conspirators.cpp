@@ -16,6 +16,7 @@ bool threadActive = false;
 #include <vector>
 #include <thread>
 #include <future>
+#include <random>
 #define GetIntArrayLength(x) sizeof(x) / sizeof(int)
 using namespace std;
 #define print(x) cout << x
@@ -27,7 +28,8 @@ enum GameScene {
 	STARTING_ROOM,
 	ROUND_1,
 	ROUND_2,
-	ROUND_3
+	ROUND_3,
+	TEST_ROUND
 };
 
 GameScene currentScene;
@@ -90,16 +92,6 @@ void AdjustScreenWithSize() {
 		ToggleFullscreen();
 		SetWindowSize(rememberScreenWidth, rememberScreenHeight);
 	}
-}
-
-string GenerateRandomString() {
-	const string allowedCharacters = "23456789ABCDEFGHJKLMNPQRSTUVWXYZ"; // Removed the O and the 0  and then I and 1 cause too similar looking
-	string randomString;
-	for (int i = 0; i < 4; i++) {
-		int randomChar = rand() % 32;
-		randomString += allowedCharacters[randomChar];
-	}
-	return randomString;
 }
 
 void LimitRoomCodes(int limit) {
@@ -653,6 +645,97 @@ int Round3() {
 }
 
 
+void DisplayWord(string word, int wordFrame) {
+	float fontspacing = screenWidth / 175.0f;
+	if(wordFrame < 90){
+		DrawTextEx(font, word.c_str(), { screenWidth / 8.200000f + xScreenMargin - wordFrame, screenHeight / 2.00000f + yScreenMargin - wordFrame}, screenWidth / 15.600000f + wordFrame, fontspacing, Fade(WHITE, (85.0f/wordFrame - 1)));
+	}
+}
+
+int TestRound() {
+	// Initialization
+	//--------------------------------------------------------------------------------------
+
+
+	int num = 0;
+	int frame = 0;
+	int wordFrame = 0;
+
+	string minute = "1";
+	string seconds = "30";
+
+	// Create a vector of strings
+	vector<string> strings = { "Crumpet", "Elf Hat", "Cricket", "Frog", "Willy Wonka", "Clock", "Fish", "Carlton", "TGI Fridays", "Frank Ocean" };
+	vector<string> wordsToPresent;
+
+	//--------------------------------------------------------------------------------------
+
+	// game loop
+	while (currentScene == TEST_ROUND)
+	{
+		// Update
+		//----------------------------------------------------------------------------------
+
+		Vector2 mousePos = GetMousePosition();
+
+		AdjustScreenWithSize();
+
+		frame += 1;
+		if (frame > 60) {
+			frame = 0;
+		}
+
+		float fontspacing = screenWidth / 175.0f;
+		float fontsize = screenWidth / 25.600000f;
+
+		if (IsKeyPressed(KEY_R)) {
+			int randomIndex = rand() % strings.size();
+			string randomString = strings[randomIndex];
+			wordsToPresent.push_back(randomString);
+			wordFrame = 0;
+		}
+
+		//----------------------------------------------------------------------------------
+
+		// Draw
+		//----------------------------------------------------------------------------------
+		BeginDrawing();
+
+		ClearBackground(BLACK);
+
+		//Artificial Background
+		Rectangle testBG = { xScreenMargin, yScreenMargin, screenWidth, screenHeight };
+		DrawRectangleRec(testBG, RED);
+
+		string round3Text = "ROUND 3!!!";
+
+		DrawTextEx(font, round3Text.c_str(), { screenWidth / 16.200000f + xScreenMargin, screenHeight / 5.00000f + yScreenMargin }, screenWidth / 15.600000f, fontspacing, WHITE);
+
+		if (wordsToPresent.size() > 1) {
+			wordsToPresent.erase(wordsToPresent.begin());
+			wordFrame = 0;
+		}
+		if (wordsToPresent.size() == 1) {
+			DisplayWord(wordsToPresent[0], wordFrame);
+		}
+		if (wordFrame > 90) {
+			wordFrame = 0;
+			if (wordsToPresent.size() > 0) {
+				wordsToPresent.erase(wordsToPresent.begin());
+			}
+		}
+		wordFrame++;
+
+		if (WindowShouldClose()) {
+			//ClosingMaintenance();
+			return 0;
+		}
+
+		EndDrawing();
+		//----------------------------------------------------------------------------------
+	}
+}
+
 int main() {
 
 	InitWindow(initialScreenWidth, initialScreenHeight, "Conspirators"); // Initialize the window
@@ -660,7 +743,7 @@ int main() {
 	// Set window resizable flag
 	SetWindowState(FLAG_WINDOW_RESIZABLE);
 
-	currentScene = MAIN_MENU; // Start with the Menu scene
+	currentScene = TEST_ROUND; 
 
 	SetTargetFPS(60);
 
@@ -691,23 +774,12 @@ int main() {
 			case ROUND_3:
 				Round3();
 				break;
+			case TEST_ROUND:
+				TestRound();
+				break;
 		}
 	}
 
 	ClosingMaintenance();
 	return 0;
 }
-
-
-/*
-
-60 numbers divisible by 1
-30 numbers divisible by 2
-20 numbers divisible by 3
-12 numbers divisible by 4
-12 numbers divisible by 5
-10 numbers divisible by 6
-8 numbers divisible by 7
-7 numbers divisible by 8
-
-*/
