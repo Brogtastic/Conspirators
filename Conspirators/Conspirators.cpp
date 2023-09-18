@@ -3,6 +3,7 @@ string roomCode = "None";
 string roomQuestion = "None";
 string gameStage = "None";
 int numMembers = 0;
+int wordFrame = 0;
 vector<string> membersList = { "", "" };
 string membersNames = "No members in room";
 string firstMember = "Need at least 3 players to start the game...";
@@ -586,6 +587,13 @@ int Round2()
 	}
 }
 
+void DisplayWord(string word) {
+	float fontspacing = screenWidth / 175.0f;
+	if (wordFrame < 100) {
+		DrawTextEx(font, word.c_str(), { screenWidth / 8.200000f + xScreenMargin - wordFrame, screenHeight / 2.00000f + yScreenMargin - wordFrame }, screenWidth / 15.600000f + wordFrame, fontspacing, Fade(WHITE, (100.0f / wordFrame - 1)));
+	}
+}
+
 int Round3() {
 	// Initialization
 	//--------------------------------------------------------------------------------------
@@ -595,6 +603,7 @@ int Round3() {
 	int num = 0;
 	int frame = 0;
 
+	// Create a vector of strings
 	string minute = "1";
 	string seconds = "30";
 
@@ -613,6 +622,11 @@ int Round3() {
 		frame += 1;
 		if (frame > 60) {
 			frame = 0;
+		}
+
+		if (IsKeyPressed(KEY_R)) {
+			wordFrame = 0;
+			wordsToPresent.push_back("TEST");
 		}
 
 		float fontspacing = screenWidth / 175.0f;
@@ -634,6 +648,21 @@ int Round3() {
 
 		DrawTextEx(font, round3Text.c_str(), { screenWidth / 16.200000f + xScreenMargin, screenHeight / 5.00000f + yScreenMargin }, screenWidth / 15.600000f, fontspacing, WHITE);
 
+		if (wordsToPresent.size() > 1) {
+			wordsToPresent.erase(wordsToPresent.begin());
+			wordFrame = 0;
+		}
+		if (wordsToPresent.size() == 1) {
+			DisplayWord(wordsToPresent[0]);
+		}
+		if (wordFrame > 100) {
+			wordFrame = 0;
+			if (wordsToPresent.size() > 0) {
+				wordsToPresent.erase(wordsToPresent.begin());
+			}
+		}
+		wordFrame++;
+
 		if (WindowShouldClose()) {
 			ClosingMaintenance();
 			return 0;
@@ -644,13 +673,6 @@ int Round3() {
 	}
 }
 
-
-void DisplayWord(string word, int wordFrame) {
-	float fontspacing = screenWidth / 175.0f;
-	if(wordFrame < 90){
-		DrawTextEx(font, word.c_str(), { screenWidth / 8.200000f + xScreenMargin - wordFrame, screenHeight / 2.00000f + yScreenMargin - wordFrame}, screenWidth / 15.600000f + wordFrame, fontspacing, Fade(WHITE, (85.0f/wordFrame - 1)));
-	}
-}
 
 int TestRound() {
 	// Initialization
@@ -665,7 +687,7 @@ int TestRound() {
 	string seconds = "30";
 
 	// Create a vector of strings
-	vector<string> strings = { "Crumpet", "Elf Hat", "Cricket", "Frog", "Willy Wonka", "Clock", "Fish", "Carlton", "TGI Fridays", "Frank Ocean" };
+	vector<string> strings = { "Crumpet", "Elf Hat", "Cricket", "Frog", "Willy Wonka", "Clock", "Fish", "Carlton", "TGI Fridays", "Frank Ocean", "Flop", "Crap", "ow my pish" };
 	vector<string> wordsToPresent;
 
 	//--------------------------------------------------------------------------------------
@@ -716,7 +738,7 @@ int TestRound() {
 			wordFrame = 0;
 		}
 		if (wordsToPresent.size() == 1) {
-			DisplayWord(wordsToPresent[0], wordFrame);
+			DisplayWord(wordsToPresent[0]);
 		}
 		if (wordFrame > 90) {
 			wordFrame = 0;
@@ -728,12 +750,14 @@ int TestRound() {
 
 		if (WindowShouldClose()) {
 			//ClosingMaintenance();
+			CloseWindow();
 			return 0;
 		}
 
 		EndDrawing();
 		//----------------------------------------------------------------------------------
 	}
+	return 0;
 }
 
 int main() {
@@ -743,7 +767,7 @@ int main() {
 	// Set window resizable flag
 	SetWindowState(FLAG_WINDOW_RESIZABLE);
 
-	currentScene = TEST_ROUND; 
+	currentScene = MAIN_MENU; 
 
 	SetTargetFPS(60);
 

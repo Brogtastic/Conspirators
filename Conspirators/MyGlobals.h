@@ -10,10 +10,12 @@ extern string roomCode;
 extern string roomQuestion;
 extern string gameStage;
 extern int numMembers;
+extern int wordFrame;
 extern vector<string> membersList;
 extern string membersNames;
 extern string firstMember;
 extern bool threadActive;
+extern vector<string> wordsToPresent;
 
 #endif
 

@@ -1,5 +1,6 @@
 #include <iostream>
 #include "MyGlobals.h"
+vector<string> wordsToPresent;
 #include "MiddleMan.h"
 #include <cpp_httplib/httplib.h>
 #include <thread>
@@ -29,6 +30,24 @@ size_t WriteCallback(void* contents, size_t size, size_t nmemb, string* output) 
 		json response = json::parse(received_data);
 
 		json data = response["data"];
+		string dataString = to_string(data);
+
+		if (dataString.size() >= 14) {
+			print("\nData size is >= 13.");
+			string first13Chars = dataString.substr(1, 13);
+			if (first13Chars == "WORD_DISPLAY:") {
+				print("\nFirst 13 chars equal to WORD_DISPLAY:");
+				string wordPart = dataString.substr(14);
+				wordPart.pop_back();
+				print("\nWORD TO DISPLAY: " + wordPart);
+				wordsToPresent.push_back(wordPart);
+				wordFrame = 0;
+			}
+			else {
+				print("\nFirst 13 characters do not equal WORD_DISPLAY");
+				print("\n" + first13Chars);
+			}
+		}
 
 		if (data == "UpdateMembers") {
 			print("\nCalling UpdateMembers");
