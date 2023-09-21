@@ -47,9 +47,34 @@ bool serverOnline;
 vector<string> allGeneratedCodes;
 thread sseThread;
 
-#define DRAWTEXT(T, X, Y, S, C) DrawTextEx(font, T.c_str(), { screenWidth / X + xScreenMargin, screenHeight / Y + yScreenMargin }, fontsize * S, fontspacing, C)
+#define DRAWTEXT(Text, X, Y, Size, Color) DrawTextEx(font, Text.c_str(), { screenWidth / X + xScreenMargin, screenHeight / Y + yScreenMargin }, fontsize * Size, fontspacing, Color)
 #define PrintRelMousePos if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) print("\n\nX: " + to_string(to_float(screenWidth) / to_float(GetMouseX())) + "\nY: " + to_string(to_float(screenHeight) / to_float(GetMouseY())) + "\n")
 
+
+
+void DrawTextBreak(string text, float x, float y, float size, int maxWidth, Color color) {
+	if (text.length() < maxWidth) {
+		DRAWTEXT(text, x, y, size, color);
+	}
+	else if(text.length() < maxWidth*2){
+		string text1, text2;
+		string cutInHalf = text.substr(0, text.length() / 2);
+
+		size_t lastSpacePos = cutInHalf.find_last_of(' ');
+
+		if (lastSpacePos != string::npos) {
+			text1 = text.substr(0, lastSpacePos);
+			text2 = text.substr(lastSpacePos + 1);
+		}
+		else {
+			cout << "No space found in the input string." << endl;
+		}
+
+		DRAWTEXT(text1, x, y, size, color);
+		DRAWTEXT(text2, x, y + (fontsize * size), size, color);
+
+	}
+}
 
 void AdjustScreenWithSize() {
 	screenHeight = GetScreenHeight();
@@ -261,6 +286,8 @@ int MainMenu()
 		if (!serverOnline) statusOfServer = "Servers are down. Cannot create room. Press 'R' to refresh.";
 		else statusOfServer = "";
 
+		PrintRelMousePos;
+
 		//----------------------------------------------------------------------------------
 
 		// Draw
@@ -341,9 +368,6 @@ int StartingRoom()
 		Rectangle testRec2 = { screenWidth / 7.111111f + xScreenMargin, screenHeight / 1.800000f + yScreenMargin, screenWidth / 25.600000f, screenHeight / 14.400000f };
 		DrawRectangleRounded(testRec, 0.2f, 2, RAYWHITE);
 		DrawRectangleRounded(testRec2, 0.2f, 2, RED);
-
-		//DrawTextEx(font, string, vector2position, fontsize, fontspacing, color);
-		//DrawTextEx(font, roomCode.c_str(), { screenWidth / 3.200000f + xScreenMargin, screenHeight / 1.800000f + yScreenMargin }, fontsize, fontspacing, WHITE);
 
 		if (gameStage == "round1") {
 			currentScene = ROUND_1;
@@ -465,6 +489,8 @@ int Round1()
 		frame += 1;
 		if (frame > 60) frame = 0;
 
+		PrintRelMousePos;
+
 		//----------------------------------------------------------------------------------
 
 		// Draw
@@ -513,6 +539,8 @@ int Round2()
 	string timeText = "1:15";
 
 	string promptText = "Write some words to mess with their theory!";
+
+	PrintRelMousePos;
 
 	//--------------------------------------------------------------------------------------
 
@@ -630,6 +658,8 @@ int Round3() {
 			wordsToPresent.push_back("TEST");
 		}
 
+		PrintRelMousePos;
+
 		//----------------------------------------------------------------------------------
 
 		// Draw
@@ -676,7 +706,6 @@ int TestRound() {
 	// Initialization
 	//--------------------------------------------------------------------------------------
 
-
 	int num = 0;
 	int frame = 0;
 	int wordFrame = 0;
@@ -684,9 +713,7 @@ int TestRound() {
 	string minute = "1";
 	string seconds = "30";
 
-	// Create a vector of strings
-	vector<string> strings = { "Crumpet", "Elf Hat", "Cricket", "Frog", "Willy Wonka", "Clock", "Fish", "Carlton", "TGI Fridays", "Frank Ocean", "Flop", "Crap", "ow my pish" };
-	vector<string> wordsToPresent;
+	string testRoundText = "Test round";
 
 	//--------------------------------------------------------------------------------------
 
@@ -696,21 +723,9 @@ int TestRound() {
 		// Update
 		//----------------------------------------------------------------------------------
 
-		Vector2 mousePos = GetMousePosition();
-
 		AdjustScreenWithSize();
 
-		frame += 1;
-		if (frame > 60) {
-			frame = 0;
-		}
-
-		if (IsKeyPressed(KEY_R)) {
-			int randomIndex = rand() % strings.size();
-			string randomString = strings[randomIndex];
-			wordsToPresent.push_back(randomString);
-			wordFrame = 0;
-		}
+		PrintRelMousePos;
 
 		//----------------------------------------------------------------------------------
 
@@ -724,24 +739,14 @@ int TestRound() {
 		Rectangle testBG = { xScreenMargin, yScreenMargin, screenWidth, screenHeight };
 		DrawRectangleRec(testBG, RED);
 
-		string round3Text = "ROUND 3!!!";
 
-		DrawTextEx(font, round3Text.c_str(), { screenWidth / 16.200000f + xScreenMargin, screenHeight / 5.00000f + yScreenMargin }, screenWidth / 15.600000f, fontspacing, WHITE);
+		if (IsKeyPressed(KEY_SPACE)) {
+			testRoundText.insert(0, 1, 'i');
+		}
 
-		if (wordsToPresent.size() > 1) {
-			wordsToPresent.erase(wordsToPresent.begin());
-			wordFrame = 0;
-		}
-		if (wordsToPresent.size() == 1) {
-			DisplayWord(wordsToPresent[0]);
-		}
-		if (wordFrame > 90) {
-			wordFrame = 0;
-			if (wordsToPresent.size() > 0) {
-				wordsToPresent.erase(wordsToPresent.begin());
-			}
-		}
-		wordFrame++;
+		//DrawTextEx(font, testRoundText.c_str(), { screenWidth / 16.200000f + xScreenMargin, screenHeight / 5.00000f + yScreenMargin }, screenWidth / 15.600000f, fontspacing, WHITE);
+
+		DrawTextBreak("What an amazing day to go out shopping with my friends!", 16.2f, 5.0f, 1.0f, 30, WHITE);
 
 		if (WindowShouldClose()) {
 			//ClosingMaintenance();
@@ -764,7 +769,7 @@ int main() {
 
 	font = LoadFont("resources/fonts/romulus.png");
 
-	currentScene = MAIN_MENU; 
+	currentScene = TEST_ROUND; 
 
 	SetTargetFPS(60);
 
