@@ -19,6 +19,7 @@ bool threadActive = false;
 #include <future>
 #include <random>
 #define GetIntArrayLength(x) sizeof(x) / sizeof(int)
+#define to_float(X) static_cast<float>(X)
 using namespace std;
 #define print(x) cout << x
 
@@ -39,10 +40,15 @@ const int initialScreenHeight = 720;
 int screenWidth = 1280, realScreenWidth = 1280, rememberScreenWidth = 1280;
 int screenHeight = 720, realScreenHeight = 720, rememberScreenHeight = 720;
 int xScreenMargin, yScreenMargin = 0;
-bool serverOnline;
+float fontspacing = screenWidth / 175.0f;
+float fontsize = screenWidth / 25.600000f;
 Font font;
+bool serverOnline;
 vector<string> allGeneratedCodes;
 thread sseThread;
+
+#define DRAWTEXT(T, X, Y, S, C) DrawTextEx(font, T.c_str(), { screenWidth / X + xScreenMargin, screenHeight / Y + yScreenMargin }, fontsize * S, fontspacing, C)
+#define PrintRelMousePos if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) print("\n\nX: " + to_string(to_float(screenWidth) / to_float(GetMouseX())) + "\nY: " + to_string(to_float(screenHeight) / to_float(GetMouseY())) + "\n")
 
 
 void AdjustScreenWithSize() {
@@ -93,6 +99,9 @@ void AdjustScreenWithSize() {
 		ToggleFullscreen();
 		SetWindowSize(rememberScreenWidth, rememberScreenHeight);
 	}
+
+	fontspacing = screenWidth / 175.0f;
+	fontsize = screenWidth / 25.600000f;
 }
 
 void LimitRoomCodes(int limit) {
@@ -315,9 +324,6 @@ int StartingRoom()
 			frame = 0;
 		}
 
-		float fontspacing = screenWidth / 175.0f;
-		float fontsize = screenWidth / 25.600000f;
-
 		//----------------------------------------------------------------------------------
 
 		// Draw
@@ -337,8 +343,7 @@ int StartingRoom()
 		DrawRectangleRounded(testRec2, 0.2f, 2, RED);
 
 		//DrawTextEx(font, string, vector2position, fontsize, fontspacing, color);
-		DrawTextEx(font, roomCode.c_str(), { screenWidth / 3.200000f + xScreenMargin, screenHeight / 1.800000f + yScreenMargin }, fontsize, fontspacing, WHITE);
-
+		//DrawTextEx(font, roomCode.c_str(), { screenWidth / 3.200000f + xScreenMargin, screenHeight / 1.800000f + yScreenMargin }, fontsize, fontspacing, WHITE);
 
 		if (gameStage == "round1") {
 			currentScene = ROUND_1;
@@ -346,10 +351,13 @@ int StartingRoom()
 
 		numberOfMembers = to_string(numMembers) + "/8";
 
-		DrawTextEx(font, membersNames.c_str(), { screenWidth / 3.200000f + xScreenMargin, screenHeight / 2.100000f + yScreenMargin }, screenWidth / 25.600000f, fontspacing, WHITE);
-		DrawTextEx(font, firstMember.c_str(), { screenWidth / 4.200000f + xScreenMargin, screenHeight / 1.100000f + yScreenMargin }, screenWidth / 25.600000f, fontspacing, WHITE);
-		DrawTextEx(font, numberOfMembers.c_str(), { screenWidth / 100.200000f + xScreenMargin, screenHeight / 100.100000f + yScreenMargin }, screenWidth / 25.600000f, fontspacing, WHITE);
-		//DrawText(access.c_str(), screenWidth / 12.800000f + xScreenMargin, screenHeight / 7.200000f + yScreenMargin, screenWidth / 25.600000f, WHITE);
+		PrintRelMousePos;
+
+		DRAWTEXT(numberOfMembers, 41.29f, 30.0f, 1.0f, WHITE);
+		DRAWTEXT(membersNames, 12.8f, 2.21f, 1.0f, WHITE);
+		DRAWTEXT(roomCode, 4.53f, 1.76f, 1.2f, WHITE);
+		DRAWTEXT(firstMember, 19.555f, 1.125f, 0.85f, WHITE);
+
 
 		if (IsKeyPressed(KEY_R)) {
 			float myPosX = screenWidth / testRec2.x;
@@ -365,7 +373,7 @@ int StartingRoom()
 			float myTextPosY = screenHeight / 100.0f;
 			float myFontSize = screenWidth / 50.0f;
 
-			print("DrawText(MainToServer(server).c_str(), screenWidth / " + to_string(myTextPosX) + "f + xScreenMargin, screenHeight / " + to_string(myTextPosY) + "f + yScreenMargin, screenWidth / " + to_string(myFontSize) + "f, WHITE);");
+			print("\n\nDrawText(MainToServer(server).c_str(), screenWidth / " + to_string(myTextPosX) + "f + xScreenMargin, screenHeight / " + to_string(myTextPosY) + "f + yScreenMargin, screenWidth / " + to_string(myFontSize) + "f, WHITE);");
 		}
 
 		if (IsKeyPressed(KEY_ENTER)){
@@ -456,9 +464,6 @@ int Round1()
 
 		frame += 1;
 		if (frame > 60) frame = 0;
-
-		float fontspacing = screenWidth / 175.0f;
-		float fontsize = screenWidth / 25.600000f;
 
 		//----------------------------------------------------------------------------------
 
@@ -556,9 +561,6 @@ int Round2()
 		frame += 1;
 		if (frame > 60) frame = 0;
 
-		float fontspacing = screenWidth / 175.0f;
-		float fontsize = screenWidth / 25.600000f;
-
 		//----------------------------------------------------------------------------------
 
 		// Draw
@@ -588,7 +590,6 @@ int Round2()
 }
 
 void DisplayWord(string word) {
-	float fontspacing = screenWidth / 175.0f;
 	if (wordFrame < 100) {
 		DrawTextEx(font, word.c_str(), { screenWidth / 8.200000f + xScreenMargin - wordFrame, screenHeight / 2.00000f + yScreenMargin - wordFrame }, screenWidth / 15.600000f + wordFrame, fontspacing, Fade(WHITE, (100.0f / wordFrame - 1)));
 	}
@@ -628,9 +629,6 @@ int Round3() {
 			wordFrame = 0;
 			wordsToPresent.push_back("TEST");
 		}
-
-		float fontspacing = screenWidth / 175.0f;
-		float fontsize = screenWidth / 25.600000f;
 
 		//----------------------------------------------------------------------------------
 
@@ -707,9 +705,6 @@ int TestRound() {
 			frame = 0;
 		}
 
-		float fontspacing = screenWidth / 175.0f;
-		float fontsize = screenWidth / 25.600000f;
-
 		if (IsKeyPressed(KEY_R)) {
 			int randomIndex = rand() % strings.size();
 			string randomString = strings[randomIndex];
@@ -767,13 +762,13 @@ int main() {
 	// Set window resizable flag
 	SetWindowState(FLAG_WINDOW_RESIZABLE);
 
+	font = LoadFont("resources/fonts/romulus.png");
+
 	currentScene = MAIN_MENU; 
 
 	SetTargetFPS(60);
 
 	SetExitKey(0);
-
-	font = LoadFont("resources/fonts/romulus.png");
 
 	while (!WindowShouldClose()) {
 		switch (currentScene) {
